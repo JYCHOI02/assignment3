@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>밈/카드 제작 도구: 긴 문장 자동 줄바꿈 방어</title>
+<title>밈/카드 제작 도구: 세로 오버플로우 방어</title>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -41,7 +41,7 @@
         pointer-events: none;
     }
     
-    /* 긴 문장 박스 탈출을 막아주는 핵심 스타일 */
+    /* 세로 길이 축소 시 텍스트 탈출을 막아주는 핵심 스타일 */
     .text-box {
         position: absolute;
         color: white;
@@ -51,14 +51,15 @@
         padding: 6px 10px;
         border: 2px dashed transparent;
         
-        /* [중요] 긴 글자, 영문 연속 텍스트, 줄바꿈 제어 속성 */
-        white-space: pre-wrap;       /* 사용자가 입력한 엔터(\n) 줄바꿈 유지 */
-        word-break: break-all;       /* 긴 단어나 영문이 박스를 뚫지 못하고 강제 줄바꿈 */
-        overflow-wrap: break-word;   /* 긴 일반 문장 영역 안에서 안전하게 개행 */
+        /* [중요] 줄바꿈 및 넘침 제어 속성 */
+        white-space: pre-wrap;       
+        word-break: break-all;       
+        overflow-wrap: break-word;   
+        overflow: hidden;            /* 박스 세로를 줄였을 때 넘치는 텍스트가 밖으로 빠져나가지 않도록 차단 */
         
         outline: none;
         min-width: 80px;
-        max-width: 380px;            /* 편집 화면 밖으로 글상자가 지나치게 커지는 것 방지 */
+        max-width: 380px;            
         min-height: 40px;
         box-sizing: border-box;
         text-align: center;
@@ -160,7 +161,7 @@
 </head>
 <body>
 
-    <h2>밈 & 카드뉴스 제작 도구 (긴 문장 방어 적용)</h2>
+    <h2>밈 & 카드뉴스 제작 도구 (세로 오버플로우 방어)</h2>
     
     <div class="workspace">
         <!-- 미리보기 화면 -->
