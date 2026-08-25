@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>밈/카드 제작 도구: 원클릭 글상자 삭제 시스템</title>
+<title>밈/카드 제작 도구: 완벽한 드래그 & 이동 시스템</title>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -41,7 +41,7 @@
         pointer-events: none;
     }
     
-    /* 화면 위에서 바로 입력하고 크기를 조절하는 글상자 스타일 */
+    /* 글상자 스타일 */
     .text-box {
         position: absolute;
         color: white;
@@ -53,19 +53,40 @@
         white-space: pre-wrap;
         word-break: break-all;
         outline: none;
-        cursor: move;
         min-width: 80px;
         min-height: 40px;
         box-sizing: border-box;
         text-align: center;
     }
-    /* 선택된 글상자 가이드 */
     .text-box.selected {
         border-color: #3b82f6;
         background: rgba(59, 130, 246, 0.12);
     }
 
-    /* 리사이즈 조절점 핸들 스타일 */
+    /* 상단 전용 이동 핸들 (십자가 아이콘) */
+    .drag-handle {
+        position: absolute;
+        top: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 20px;
+        background-color: #3b82f6;
+        color: white;
+        border-radius: 50%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        cursor: move;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+    .text-box.selected .drag-handle {
+        display: flex;
+    }
+
+    /* 리사이즈 조절점 핸들 */
     .resize-handle {
         position: absolute;
         width: 8px;
@@ -134,12 +155,12 @@
 </head>
 <body>
 
-    <h2>밈 & 카드뉴스 제작 도구 (원클릭 삭제 시스템)</h2>
+    <h2>밈 & 카드뉴스 제작 도구 (드래그 안정화 시스템)</h2>
     
     <div class="workspace">
         <!-- 미리보기 화면 -->
         <div>
-            <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기</label>
+            <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기 (글상자 상단 ✢ 버튼으로 편하게 이동)</label>
             <div id="editor-container">
                 <img id="preview-image" src="" alt="이미지를 업로드하세요">
             </div>
@@ -254,18 +275,29 @@
         box.style.left = x + 'px';
         box.style.top = y + 'px';
 
+        // 이동 전용 상단 핸들(아이콘) 생성
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'drag-handle';
+        dragHandle.innerHTML = '✢';
+        dragHandle.contentEditable = "false";
+
+        // 리사이즈 핸들 생성
         const handleR = document.createElement('div');
         handleR.className = 'resize-handle handle-r';
+        handleR.contentEditable = "false";
         const handleB = document.createElement('div');
         handleB.className = 'resize-handle handle-b';
+        handleB.contentEditable = "false";
         const handleSE = document.createElement('div');
         handleSE.className = 'resize-handle handle-se';
+        handleSE.contentEditable = "false";
 
+        box.appendChild(dragHandle);
         box.appendChild(handleR);
         box.appendChild(handleB);
         box.appendChild(handleSE);
 
-        initDragAndDrop(box);
+        initStableDrag(box, dragHandle);
         initResize(box, handleR, handleB, handleSE);
 
         box.addEventListener('focus', function() {
@@ -317,12 +349,12 @@
         }
     }
 
-    // 5. 키보드 Delete 키 단일화 (어떤 상황이든 Delete 누르면 한 번에 글상자 전체 삭제)
+    // Delete 키 일괄 삭제
     document.addEventListener('keydown', function(e) {
         if (!selectedBox) return;
 
         if (e.key === 'Delete') {
-            e.preventDefault(); // 한 글자 지우기 등 기본 동작 차단
+            e.preventDefault();
             removeSelectedBox();
         }
     });
@@ -343,7 +375,7 @@
         }
     });
 
-    // 서식 변경 이벤트
+    // 서식 제어
     activeSize.addEventListener('input', () => {
         if (selectedBox) selectedBox.style.fontSize = activeSize.value + 'px';
     });
@@ -362,14 +394,12 @@
 
     deleteBoxBtn.addEventListener('click', removeSelectedBox);
 
-    // 6. 드래그 앤 드롭 이동
-    function initDragAndDrop(box) {
+    // 5. 완벽하게 안정화된 드래그 로직 (이동 전용 핸들 및 독립 mousemove 활용)
+    function initStableDrag(box, dragHandle) {
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
 
-        box.addEventListener('mousedown', function(e) {
-            if (document.activeElement === box || e.target.classList.contains('resize-handle')) return;
-
+        function startMove(e) {
             isDragging = true;
             selectBox(box);
             startX = e.clientX;
@@ -377,17 +407,23 @@
 
             initialLeft = box.offsetLeft;
             initialTop = box.offsetTop;
-            e.stopPropagation();
-        });
 
+            e.stopPropagation();
+            e.preventDefault(); // 텍스트 커서 활성화 방지
+        }
+
+        // 1) 상단 ✢ 버튼 잡았을 때
+        dragHandle.addEventListener('mousedown', startMove);
+
+        // Global 마우스 이동 처리
         document.addEventListener('mousemove', function(e) {
             if (!isDragging || selectedBox !== box) return;
 
-            let newLeft = initialLeft + (e.clientX - startX);
-            let newTop = initialTop + (e.clientY - startY);
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
 
-            box.style.left = newLeft + 'px';
-            box.style.top = newTop + 'px';
+            box.style.left = (initialLeft + dx) + 'px';
+            box.style.top = (initialTop + dy) + 'px';
         });
 
         document.addEventListener('mouseup', function() {
@@ -395,7 +431,7 @@
         });
     }
 
-    // 7. 리사이즈 기능
+    // 6. 리사이즈 기능
     function initResize(box, handleR, handleB, handleSE) {
         let isResizing = false;
         let currentHandle = null;
