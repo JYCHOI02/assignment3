@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>밈/카드 제작 도구: 크기 조절 & 글자 배열 컨트롤</title>
+<title>밈/카드 제작 도구: 원클릭 글상자 삭제 시스템</title>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -57,7 +57,7 @@
         min-width: 80px;
         min-height: 40px;
         box-sizing: border-box;
-        text-align: center; /* 기본 중앙 정렬 */
+        text-align: center;
     }
     /* 선택된 글상자 가이드 */
     .text-box.selected {
@@ -134,12 +134,12 @@
 </head>
 <body>
 
-    <h2>밈 & 카드뉴스 제작 도구 (임의 크기 조절 & 정렬)</h2>
+    <h2>밈 & 카드뉴스 제작 도구 (원클릭 삭제 시스템)</h2>
     
     <div class="workspace">
         <!-- 미리보기 화면 -->
         <div>
-            <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기 (모서리점으로 크기 조절 가능)</label>
+            <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기</label>
             <div id="editor-container">
                 <img id="preview-image" src="" alt="이미지를 업로드하세요">
             </div>
@@ -235,7 +235,7 @@
         }
     });
 
-    // 3. 에디터 영역 클릭 시 글상자 직접 생성 및 포커스
+    // 3. 에디터 영역 클릭 시 글상자 직접 생성
     editorContainer.addEventListener('click', function(e) {
         if (e.target !== editorContainer && e.target !== previewImage) return;
 
@@ -254,7 +254,6 @@
         box.style.left = x + 'px';
         box.style.top = y + 'px';
 
-        // 3개의 리사이즈 조절점 추가 (우측, 하단, 우측하단)
         const handleR = document.createElement('div');
         handleR.className = 'resize-handle handle-r';
         const handleB = document.createElement('div');
@@ -290,7 +289,7 @@
         sel.addRange(range);
     }
 
-    // 4. 글상자 선택 및 서식 패널 동기화
+    // 4. 글상자 선택 관리
     function selectBox(box) {
         document.querySelectorAll('.text-box').forEach(b => b.classList.remove('selected'));
         selectedBox = box;
@@ -302,7 +301,6 @@
         activeSize.value = parseInt(window.getComputedStyle(selectedBox).fontSize);
         activeColor.value = rgbToHex(window.getComputedStyle(selectedBox).color);
 
-        // 정렬 버튼 상태 동기화
         const currentAlign = window.getComputedStyle(selectedBox).textAlign || 'center';
         alignBtns.forEach(btn => {
             if (btn.getAttribute('data-align') === currentAlign) btn.classList.add('active');
@@ -319,19 +317,13 @@
         }
     }
 
-    // 키보드 Delete / Backspace 키 삭제
+    // 5. 키보드 Delete 키 단일화 (어떤 상황이든 Delete 누르면 한 번에 글상자 전체 삭제)
     document.addEventListener('keydown', function(e) {
         if (!selectedBox) return;
 
-        if (e.key === 'Delete' || e.key === 'Backspace') {
-            const isEditingText = document.activeElement === selectedBox;
-            if (!isEditingText) {
-                e.preventDefault();
-                removeSelectedBox();
-            } else if (selectedBox.textContent.trim() === '' && e.key === 'Delete') {
-                e.preventDefault();
-                removeSelectedBox();
-            }
+        if (e.key === 'Delete') {
+            e.preventDefault(); // 한 글자 지우기 등 기본 동작 차단
+            removeSelectedBox();
         }
     });
 
@@ -359,7 +351,6 @@
         if (selectedBox) selectedBox.style.color = activeColor.value;
     });
 
-    // 글자 정렬 버튼 이벤트
     alignBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             if (!selectedBox) return;
@@ -371,7 +362,7 @@
 
     deleteBoxBtn.addEventListener('click', removeSelectedBox);
 
-    // 5. 드래그 앤 드롭 이동
+    // 6. 드래그 앤 드롭 이동
     function initDragAndDrop(box) {
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
@@ -404,7 +395,7 @@
         });
     }
 
-    // 6. 글상자 임의 크기 조절 (Resize) 로직
+    // 7. 리사이즈 기능
     function initResize(box, handleR, handleB, handleSE) {
         let isResizing = false;
         let currentHandle = null;
