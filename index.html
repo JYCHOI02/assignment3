@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>밈/카드 제작 도구 4단계: 자유 위치 이동 및 텍스트 최적화</title>
+<title>밈/카드 제작 도구: 자유 글상자 추가 시스템</title>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -31,33 +31,35 @@
         background: #e1e4e8;
         border: 2px dashed #cbd5e1;
         overflow: hidden;
-        user-select: none;
+        cursor: crosshair; /* 클릭해서 글상자를 만들 수 있음을 암시 */
     }
     #preview-image {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        pointer-events: none; /* 이미지가 드래그를 방해하지 않도록 설정 */
+        pointer-events: none;
     }
     
-    /* 자유 이동 가능한 텍스트 오버레이 스타일 */
-    .text-overlay {
+    /* 동적으로 생성되는 개별 글상자 스타일 */
+    .text-box {
         position: absolute;
         color: white;
         font-size: 24px;
         font-weight: bold;
-        cursor: grab; /* 마우스 올렸을 때 손바닥 모양 */
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9);
-        text-align: center;
-        word-break: break-all;
-        overflow-wrap: break-word;
-        white-space: pre-wrap;
-        padding: 5px;
+        cursor: grab;
+        user-select: none;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+        padding: 4px 8px;
         border: 2px dashed transparent;
+        white-space: pre-wrap;
+        word-break: break-all;
     }
-    .text-overlay:active {
-        cursor: grabbing; /* 잡고 있을 때 주먹 모양 */
-        border-color: rgba(255, 255, 255, 0.5); /* 드래그 중인 것 시각적 표시 */
+    .text-box.selected {
+        border-color: #3b82f6; /* 선택된 글상자 테두리 표시 */
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .text-box:active {
+        cursor: grabbing;
     }
 
     /* 조작 패널 */
@@ -107,21 +109,29 @@
         color: white;
         border-color: #2563eb;
     }
+    .delete-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-weight: bold;
+    }
+    .delete-btn:hover { background: #dc2626; }
 </style>
 </head>
 <body>
 
-    <h2>밈 & 카드뉴스 제작 도구 (4단계 - 위치 자유 이동 및 방어)</h2>
+    <h2>밈 & 카드뉴스 제작 도구 (자유 글상자 시스템)</h2>
     
     <div class="workspace">
         <!-- 미리보기 화면 -->
         <div>
-            <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기 (텍스트를 마우스로 끌어보세요!)</label>
+            <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기 (이미지 위를 클릭해 글상자 추가)</label>
             <div id="editor-container">
                 <img id="preview-image" src="" alt="이미지를 업로드하세요">
-                <!-- 초기 위치를 퍼센트(%) 기준으로 지정하여 화면 안쪽에 안전하게 배치 -->
-                <div id="text-top" class="text-overlay" style="top: 10%; left: 10%;">상단 문구</div>
-                <div id="text-bottom" class="text-overlay" style="bottom: 10%; left: 10%; top: auto;">하단 문구</div>
             </div>
         </div>
 
@@ -141,21 +151,16 @@
                 <input type="file" id="upload-btn" accept="image/*">
             </div>
 
-            <div class="control-group">
-                <label>상단 문구 (장문 입력 가능)</label>
-                <textarea id="input-top" rows="2">상단 문구</textarea>
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <span>크기: <input type="range" id="size-top" min="12" max="60" value="24"></span>
-                    <span>색상: <input type="color" id="color-top" value="#ffffff"></span>
+            <!-- 선택된 글상자 제어 패널 (글상자를 클릭하면 활성화됨) -->
+            <div class="control-group" id="selected-controls" style="opacity: 0.5; pointer-events: none;">
+                <label>선택된 글상자 편집</label>
+                <textarea id="active-text-input" rows="2" placeholder="글상자를 클릭하세요"></textarea>
+                <div style="display:flex; gap:10px; margin-top:8px;">
+                    <span>크기: <input type="range" id="active-size" min="12" max="60" value="24"></span>
+                    <span>색상: <input type="color" id="active-color" value="#ffffff"></span>
                 </div>
-            </div>
-
-            <div class="control-group">
-                <label>하단 문구 (장문 입력 가능)</label>
-                <textarea id="input-bottom" rows="2">하단 문구</textarea>
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <span>크기: <input type="range" id="size-bottom" min="12" max="60" value="24"></span>
-                    <span>색상: <input type="color" id="color-bottom" value="#ffffff"></span>
+                <div style="margin-top: 10px;">
+                    <button class="delete-btn" id="delete-box-btn">이 글상자 삭제</button>
                 </div>
             </div>
         </div>
@@ -166,15 +171,14 @@
     const previewImage = document.getElementById('preview-image');
     const editorContainer = document.getElementById('editor-container');
     
-    const inputTop = document.getElementById('input-top');
-    const inputBottom = document.getElementById('input-bottom');
-    const sizeTop = document.getElementById('size-top');
-    const sizeBottom = document.getElementById('size-bottom');
-    const colorTop = document.getElementById('color-top');
-    const colorBottom = document.getElementById('color-bottom');
-    const textTop = document.getElementById('text-top');
-    const textBottom = document.getElementById('text-bottom');
+    const selectedControls = document.getElementById('selected-controls');
+    const activeTextInput = document.getElementById('active-text-input');
+    const activeSize = document.getElementById('active-size');
+    const activeColor = document.getElementById('active-color');
+    const deleteBoxBtn = document.getElementById('delete-box-btn');
     const ratioBtns = document.querySelectorAll('.ratio-btn');
+
+    let selectedBox = null; // 현재 선택된 글상자 객체
 
     // 1. 비율 선택
     ratioBtns.forEach(btn => {
@@ -208,70 +212,126 @@
         }
     });
 
-    // 3. 텍스트 및 속성 실시간 반영
-    inputTop.addEventListener('input', () => textTop.textContent = inputTop.value);
-    inputBottom.addEventListener('input', () => textBottom.textContent = inputBottom.value);
-    
-    sizeTop.addEventListener('input', () => textTop.style.fontSize = sizeTop.value + 'px');
-    sizeBottom.addEventListener('input', () => textBottom.style.fontSize = sizeBottom.value + 'px');
-    colorTop.addEventListener('input', () => textTop.style.color = colorTop.value);
-    colorBottom.addEventListener('input', () => textTop.style.color = colorBottom.value);
+    // 3. 에디터 영역 클릭 시 새로운 글상자 생성
+    editorContainer.addEventListener('click', function(e) {
+        // 이미지를 업로드하지 않았거나 글상자 자체를 클릭한 경우는 제외
+        if (e.target !== editorContainer && e.target !== previewImage) return;
 
-    // 4. 완벽한 마우스 드래그 앤 드롭 (글자 위치 자유 이동) 기능 구현
-    let isDragging = false;
-    let targetElement = null;
-    let startX, startY;
-    let initialLeft, initialTop;
+        const rect = editorContainer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
 
-    document.querySelectorAll('.text-overlay').forEach(el => {
-        el.addEventListener('mousedown', function(e) {
+        createTextbox(x, y, "새 글상자");
+    });
+
+    function createTextbox(x, y, textContent) {
+        const box = document.createElement('div');
+        box.className = 'text-box';
+        box.textContent = textContent;
+        box.style.left = x + 'px';
+        box.style.top = y + 'px';
+
+        // 드래그 이동 로직 연결
+        initDragAndDrop(box);
+
+        // 클릭 시 선택 상태로 만들기
+        box.addEventListener('click', function(e) {
+            e.stopPropagation();
+            selectBox(box);
+        });
+
+        editorContainer.appendChild(box);
+        selectBox(box); // 생성과 동시에 선택
+    }
+
+    // 4. 글상자 선택 관리
+    function selectBox(box) {
+        document.querySelectorAll('.text-box').forEach(b => b.classList.remove('selected'));
+        selectedBox = box;
+        selectedBox.classList.add('selected');
+
+        // 우측 패널 활성화 및 값 동기화
+        selectedControls.style.opacity = '1';
+        selectedControls.style.pointerEvents = 'auto';
+        activeTextInput.value = selectedBox.textContent;
+        activeSize.value = parseInt(window.getComputedStyle(selectedBox).fontSize);
+        activeColor.value = rgbToHex(window.getComputedStyle(selectedBox).color);
+    }
+
+    // 바깥 영역(에디터 외)을 누르면 선택 해제
+    document.addEventListener('click', function(e) {
+        if (!editorContainer.contains(e.target) && !document.querySelector('.controls').contains(e.target)) {
+            if (selectedBox) {
+                selectedBox.classList.remove('selected');
+                selectedBox = null;
+                selectedControls.style.opacity = '0.5';
+                selectedControls.style.pointerEvents = 'none';
+            }
+        }
+    });
+
+    // 5. 우측 패널 조작 시 실시간 반영
+    activeTextInput.addEventListener('input', () => {
+        if (selectedBox) selectedBox.textContent = activeTextInput.value;
+    });
+    activeSize.addEventListener('input', () => {
+        if (selectedBox) selectedBox.style.fontSize = activeSize.value + 'px';
+    });
+    activeColor.addEventListener('input', () => {
+        if (selectedBox) selectedBox.style.color = activeColor.value;
+    });
+
+    // 6. 삭제 버튼
+    deleteBoxBtn.addEventListener('click', () => {
+        if (selectedBox) {
+            selectedBox.remove();
+            selectedBox = null;
+            selectedControls.style.opacity = '0.5';
+            selectedControls.style.pointerEvents = 'none';
+        }
+    });
+
+    // 7. 드래그 앤 드롭 함수
+    function initDragAndDrop(box) {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        box.addEventListener('mousedown', function(e) {
             isDragging = true;
-            targetElement = this;
-            
+            selectBox(box);
             startX = e.clientX;
             startY = e.clientY;
 
-            // 현재 픽셀 위치 기준으로 변환
-            const rect = targetElement.getBoundingClientRect();
-            const containerRect = editorContainer.getBoundingClientRect();
-
-            initialLeft = rect.left - containerRect.left;
-            initialTop = rect.top - containerRect.top;
-
-            // bottom 속성이 들어가 있으면 충돌하므로 제거하고 top으로 고정
-            targetElement.style.bottom = 'auto';
-            targetElement.style.left = initialLeft + 'px';
-            targetElement.style.top = initialTop + 'px';
-
-            e.preventDefault(); // 텍스트 선택 방지
+            initialLeft = box.offsetLeft;
+            initialTop = box.offsetTop;
+            e.stopPropagation();
         });
-    });
 
-    document.addEventListener('mousemove', function(e) {
-        if (!isDragging || !targetElement) return;
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging || selectedBox !== box) return;
 
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
+            let newLeft = initialLeft + (e.clientX - startX);
+            let newTop = initialTop + (e.clientY - startY);
 
-        let newLeft = initialLeft + dx;
-        let newTop = initialTop + dy;
+            box.style.left = newLeft + 'px';
+            box.style.top = newTop + 'px';
+        });
 
-        // 컨테이너 경계 안에서만 움직이도록 제한 (선택사항)
-        const containerRect = editorContainer.getBoundingClientRect();
-        const targetRect = targetElement.getBoundingClientRect();
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+    }
 
-        if (newLeft >= 0 && newLeft + targetRect.width <= containerRect.width) {
-            targetElement.style.left = newLeft + 'px';
-        }
-        if (newTop >= 0 && newTop + targetRect.height <= containerRect.height) {
-            targetElement.style.top = newTop + 'px';
-        }
-    });
-
-    document.addEventListener('mouseup', function() {
-        isDragging = false;
-        targetElement = null;
-    });
+    // 유틸: RGB를 Hex 코드로 변환 (컬러피커 초기값 세팅용)
+    function rgbToHex(rgb) {
+        if (!rgb || rgb.startsWith('#')) return rgb;
+        const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+        if (!match) return '#ffffff';
+        return "#" + match.slice(1, 4).map(x => {
+            const hex = parseInt(x).toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        }).join('');
+    }
 </script>
 
 </body>
