@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>밈/카드 제작 도구 1단계 프로토타입</title>
+<style>
+    #editor-container { position: relative; width: 500px; height: 500px; border: 2px solid #ccc; }
+    #preview-image { width: 100%; height: 100%; object-fit: contain; }
+    .text-overlay { position: absolute; color: white; font-size: 24px; font-weight: bold; cursor: move; user-select: none; text-shadow: 2px 2px 4px black; }
+    #controls { margin-top: 20px; }
+</style>
+</head>
+<body>
+
+    <!-- 1. 미리보기 영역 -->
+    <div id="editor-container">
+        <img id="preview-image" src="" alt="이미지를 선택하세요">
+        <div id="text-top" class="text-overlay" style="top: 10px; left: 10px;">상단 문구</div>
+        <div id="text-bottom" class="text-overlay" style="bottom: 10px; left: 10px;">하단 문구</div>
+    </div>
+
+    <!-- 2. 조작 UI 영역 -->
+    <div id="controls">
+        <label>이미지 업로드: <input type="file" id="upload-btn" accept="image/*"></label><br><br>
+        
+        <label>상단 문구: <input type="text" id="input-top" value="상단 문구"></label>
+        <label>크기: <input type="range" id="size-top" min="10" max="100" value="24"></label>
+        <label>색상: <input type="color" id="color-top" value="#ffffff"></label><br><br>
+
+        <label>하단 문구: <input type="text" id="input-bottom" value="하단 문구"></label>
+        <label>크기: <input type="range" id="size-bottom" min="10" max="100" value="24"></label>
+        <label>색상: <input type="color" id="color-bottom" value="#ffffff"></label>
+    </div>
+
+<script>
+    // DOM 요소 가져오기
+    const uploadBtn = document.getElementById('upload-btn');
+    const previewImage = document.getElementById('preview-image');
+    const inputTop = document.getElementById('input-top');
+    const inputBottom = document.getElementById('input-bottom');
+    const sizeTop = document.getElementById('size-top');
+    const sizeBottom = document.getElementById('size-bottom');
+    const colorTop = document.getElementById('color-top');
+    const colorBottom = document.getElementById('color-bottom');
+    const textTop = document.getElementById('text-top');
+    const textBottom = document.getElementById('text-bottom');
+
+    // 1. 이미지 로드 처리
+    uploadBtn.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 2. 문구 내용 실시간 반영
+    inputTop.addEventListener('input', () => textTop.textContent = inputTop.value);
+    inputBottom.addEventListener('input', () => textBottom.textContent = inputBottom.value);
+
+    // 3. 문구 속성(크기, 색상) 실시간 반영
+    sizeTop.addEventListener('input', () => textTop.style.fontSize = sizeTop.value + 'px');
+    sizeBottom.addEventListener('input', () => textBottom.style.fontSize = sizeBottom.value + 'px');
+    colorTop.addEventListener('input', () => textTop.style.color = colorTop.value);
+    colorBottom.addEventListener('input', () => textBottom.style.color = colorBottom.value);
+
+    // 4. 문구 위치 이동 (간단한 드래그 앤 드롭 구현)
+    let activeElement = null;
+    let offsetX, offsetY;
+
+    document.querySelectorAll('.text-overlay').forEach(el => {
+        el.addEventListener('mousedown', function(e) {
+            activeElement = this;
+            offsetX = e.clientX - activeElement.offsetLeft;
+            offsetY = e.clientY - activeElement.offsetTop;
+            activeElement.style.zIndex = 10; // 드래그 중 맨 위로
+        });
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (activeElement) {
+            activeElement.style.left = (e.clientX - offsetX) + 'px';
+            activeElement.style.top = (e.clientY - offsetY) + 'px';
+            // 에디터 영역 밖으로 나가지 않도록 제한하는 로직은 추후 추가 가능
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (activeElement) {
+            activeElement.style.zIndex = 1; // 드래그 종료
+            activeElement = null;
+        }
+    });
+</script>
+
+</body>
+</html>
