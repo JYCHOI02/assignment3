@@ -2,40 +2,163 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>밈/카드 제작 도구 1단계 프로토타입</title>
+<title>밈/카드 제작 도구 2단계: 비율 선택 및 배치 일치</title>
 <style>
-    #editor-container { position: relative; width: 500px; height: 500px; border: 2px solid #ccc; }
-    #preview-image { width: 100%; height: 100%; object-fit: contain; }
-    .text-overlay { position: absolute; color: white; font-size: 24px; font-weight: bold; cursor: move; user-select: none; text-shadow: 2px 2px 4px black; }
-    #controls { margin-top: 20px; }
+    body {
+        font-family: 'Apple SD Gothic Neo', sans-serif;
+        background-color: #f4f6f8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 30px;
+    }
+    h2 { color: #333; margin-bottom: 10px; }
+
+    /* 메인 레이아웃 분할 (좌측: 미리보기, 우측: 조작 패널) */
+    .workspace {
+        display: flex;
+        gap: 30px;
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    /* 1. 미리보기 영역 컨테이너 (비율별 동적 변경) */
+    #editor-container {
+        position: relative;
+        width: 400px;
+        height: 400px; /* 초기 1:1 */
+        background: #e1e4e8;
+        border: 2px dashed #cbd5e1;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    #preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* 영역에 꽉 차게 조절 */
+    }
+    .text-overlay {
+        position: absolute;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: move;
+        user-select: none;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        text-align: center;
+        width: 90%;
+        left: 5%;
+    }
+
+    /* 2. 조작 UI 영역 */
+    .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 300px;
+    }
+    .control-group {
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .control-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #475569;
+    }
+    .control-group input[type="text"],
+    .control-group select {
+        width: 100%;
+        padding: 6px;
+        box-sizing: border-box;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+    }
+    .ratio-btns {
+        display: flex;
+        gap: 5px;
+    }
+    .ratio-btn {
+        flex: 1;
+        padding: 6px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    .ratio-btn.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #2563eb;
+    }
 </style>
 </head>
 <body>
 
-    <!-- 1. 미리보기 영역 -->
-    <div id="editor-container">
-        <img id="preview-image" src="" alt="이미지를 선택하세요">
-        <div id="text-top" class="text-overlay" style="top: 10px; left: 10px;">상단 문구</div>
-        <div id="text-bottom" class="text-overlay" style="bottom: 10px; left: 10px;">하단 문구</div>
-    </div>
+    <h2>밈 & 카드뉴스 제작 도구 (2단계)</h2>
+    
+    <div class="workspace">
+        <!-- [구분 영역 1] 미리보기 화면 -->
+        <div>
+            <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기</label>
+            <div id="editor-container">
+                <img id="preview-image" src="" alt="이미지를 업로드하세요">
+                <div id="text-top" class="text-overlay" style="top: 20px;">상단 문구</div>
+                <div id="text-bottom" class="text-overlay" style="bottom: 20px;">하단 문구</div>
+            </div>
+        </div>
 
-    <!-- 2. 조작 UI 영역 -->
-    <div id="controls">
-        <label>이미지 업로드: <input type="file" id="upload-btn" accept="image/*"></label><br><br>
-        
-        <label>상단 문구: <input type="text" id="input-top" value="상단 문구"></label>
-        <label>크기: <input type="range" id="size-top" min="10" max="100" value="24"></label>
-        <label>색상: <input type="color" id="color-top" value="#ffffff"></label><br><br>
+        <!-- [구분 영역 2] 조작 패널 (비율 선택 포함) -->
+        <div class="controls">
+            <div class="control-group">
+                <label>비율 선택</label>
+                <div class="ratio-btns">
+                    <button class="ratio-btn active" data-ratio="1:1">1:1</button>
+                    <button class="ratio-btn" data-ratio="4:5">4:5</button>
+                    <button class="ratio-btn" data-ratio="9:16">9:16</button>
+                </div>
+            </div>
 
-        <label>하단 문구: <input type="text" id="input-bottom" value="하단 문구"></label>
-        <label>크기: <input type="range" id="size-bottom" min="10" max="100" value="24"></label>
-        <label>색상: <input type="color" id="color-bottom" value="#ffffff"></label>
+            <div class="control-group">
+                <label>이미지 업로드</label>
+                <input type="file" id="upload-btn" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label>상단 문구</label>
+                <input type="text" id="input-top" value="상단 문구">
+                <div style="display:flex; gap:10px; margin-top:5px;">
+                    <span>크기: <input type="range" id="size-top" min="12" max="60" value="24"></span>
+                    <span>색상: <input type="color" id="color-top" value="#ffffff"></span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>하단 문구</label>
+                <input type="text" id="input-bottom" value="하단 문구">
+                <div style="display:flex; gap:10px; margin-top:5px;">
+                    <span>크기: <input type="range" id="size-bottom" min="12" max="60" value="24"></span>
+                    <span>색상: <input type="color" id="color-bottom" value="#ffffff"></span>
+                </div>
+            </div>
+        </div>
     </div>
 
 <script>
-    // DOM 요소 가져오기
     const uploadBtn = document.getElementById('upload-btn');
     const previewImage = document.getElementById('preview-image');
+    const editorContainer = document.getElementById('editor-container');
+    
     const inputTop = document.getElementById('input-top');
     const inputBottom = document.getElementById('input-bottom');
     const sizeTop = document.getElementById('size-top');
@@ -44,8 +167,29 @@
     const colorBottom = document.getElementById('color-bottom');
     const textTop = document.getElementById('text-top');
     const textBottom = document.getElementById('text-bottom');
+    const ratioBtns = document.querySelectorAll('.ratio-btn');
 
-    // 1. 이미지 로드 처리
+    // 1. 비율 선택 및 미리보기 프레임 변경
+    ratioBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            ratioBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const ratio = btn.getAttribute('data-ratio');
+            if (ratio === '1:1') {
+                editorContainer.style.width = '400px';
+                editorContainer.style.height = '400px';
+            } else if (ratio === '4:5') {
+                editorContainer.style.width = '360px';
+                editorContainer.style.height = '450px';
+            } else if (ratio === '9:16') {
+                editorContainer.style.width = '280px';
+                editorContainer.style.height = '497px';
+            }
+        });
+    });
+
+    // 2. 이미지 업로드
     uploadBtn.addEventListener('change', function(event) {
         const file = event.target.files[0];
         if (file) {
@@ -57,43 +201,13 @@
         }
     });
 
-    // 2. 문구 내용 실시간 반영
+    // 3. 텍스트 및 속성 실시간 반영
     inputTop.addEventListener('input', () => textTop.textContent = inputTop.value);
     inputBottom.addEventListener('input', () => textBottom.textContent = inputBottom.value);
-
-    // 3. 문구 속성(크기, 색상) 실시간 반영
     sizeTop.addEventListener('input', () => textTop.style.fontSize = sizeTop.value + 'px');
     sizeBottom.addEventListener('input', () => textBottom.style.fontSize = sizeBottom.value + 'px');
     colorTop.addEventListener('input', () => textTop.style.color = colorTop.value);
     colorBottom.addEventListener('input', () => textBottom.style.color = colorBottom.value);
-
-    // 4. 문구 위치 이동 (간단한 드래그 앤 드롭 구현)
-    let activeElement = null;
-    let offsetX, offsetY;
-
-    document.querySelectorAll('.text-overlay').forEach(el => {
-        el.addEventListener('mousedown', function(e) {
-            activeElement = this;
-            offsetX = e.clientX - activeElement.offsetLeft;
-            offsetY = e.clientY - activeElement.offsetTop;
-            activeElement.style.zIndex = 10; // 드래그 중 맨 위로
-        });
-    });
-
-    document.addEventListener('mousemove', function(e) {
-        if (activeElement) {
-            activeElement.style.left = (e.clientX - offsetX) + 'px';
-            activeElement.style.top = (e.clientY - offsetY) + 'px';
-            // 에디터 영역 밖으로 나가지 않도록 제한하는 로직은 추후 추가 가능
-        }
-    });
-
-    document.addEventListener('mouseup', function() {
-        if (activeElement) {
-            activeElement.style.zIndex = 1; // 드래그 종료
-            activeElement = null;
-        }
-    });
 </script>
 
 </body>
