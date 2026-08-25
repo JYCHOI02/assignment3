@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>밈/카드 제작 도구: 드래그 핸들 복구 및 방어</title>
+<title>밈/카드 제작 도구: 글상자 레이아웃 안정화</title>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -41,15 +41,14 @@
         pointer-events: none;
     }
     
-    /* 글상자 스타일 (오버플로우는 세로 줄에만 적용되도록 수정) */
+    /* 글상자 구조 개선 (높이 자동 조절 및 텍스트 겹침 방지) */
     .text-box {
         position: absolute;
         color: white;
         font-size: 24px;
         font-weight: bold;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9);
-        padding: 6px 10px;
-        padding-top: 24px; /* 상단 이동 핸들이 들어갈 공간 확보 */
+        padding: 8px 12px;
         border: 2px dashed transparent;
         
         white-space: pre-wrap;       
@@ -57,32 +56,33 @@
         overflow-wrap: break-word;   
         
         outline: none;
-        min-width: 90px;
+        min-width: 100px;
         max-width: 380px;            
-        min-height: 55px;
+        height: auto;                /* 내용에 맞춰 세로 크기가 유연하게 조절되도록 수정 */
         box-sizing: border-box;
         text-align: center;
+        line-height: 1.35;           /* 줄 간격 최적화로 겹침 현상 방지 */
     }
     .text-box.selected {
         border-color: #3b82f6;
         background: rgba(59, 130, 246, 0.12);
     }
 
-    /* 상단 이동 핸들 (박스 내부 상단에 고정하여 가림 현상 방지) */
+    /* 상단 이동 핸들 (텍스트 영역을 침범하지 않도록 상단 바 형태로 분리) */
     .drag-handle {
         position: absolute;
-        top: 2px;
+        top: -18px;
         left: 50%;
         transform: translateX(-50%);
-        width: 24px;
-        height: 16px;
+        width: 28px;
+        height: 14px;
         background-color: #3b82f6;
         color: white;
-        border-radius: 4px;
+        border-radius: 3px;
         display: none;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
+        font-size: 10px;
         cursor: move;
         box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         z-index: 10;
@@ -160,7 +160,7 @@
 </head>
 <body>
 
-    <h2>밈 & 카드뉴스 제작 도구 (드래그 핸들 복구 완료)</h2>
+    <h2>밈 & 카드뉴스 제작 도구 (텍스트 레이아웃 수정 완료)</h2>
     
     <div class="workspace">
         <!-- 미리보기 화면 -->
@@ -397,7 +397,7 @@
 
     deleteBoxBtn.addEventListener('click', removeSelectedBox);
 
-    // 5. 안정화된 드래그 로직 (이동 핸들 복구)
+    // 5. 안정화된 드래그 로직
     function initStableDrag(box, dragHandle) {
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
@@ -432,37 +432,31 @@
         });
     }
 
-    // 6. 리사이즈 기능
+    // 6. 리사이즈 기능 (너비만 조절 가능하도록 핸들 최적화)
     function initResize(box, handleR, handleB, handleSE) {
         let isResizing = false;
         let currentHandle = null;
-        let startX, startY, startWidth, startHeight;
+        let startX, startY, startWidth;
 
         function startResize(e, handle) {
             isResizing = true;
             currentHandle = handle;
             startX = e.clientX;
-            startY = e.clientY;
             startWidth = box.offsetWidth;
-            startHeight = box.offsetHeight;
             e.stopPropagation();
             e.preventDefault();
         }
 
         handleR.addEventListener('mousedown', (e) => startResize(e, 'r'));
-        handleB.addEventListener('mousedown', (e) => startResize(e, 'b'));
         handleSE.addEventListener('mousedown', (e) => startResize(e, 'se'));
+        // 세로 크기는 글자 양에 따라 자동 조절되므로 하단 핸들은 비활성화하거나 너비 연동으로 처리
 
         document.addEventListener('mousemove', function(e) {
             if (!isResizing || selectedBox !== box) return;
 
             if (currentHandle === 'r' || currentHandle === 'se') {
                 const newWidth = startWidth + (e.clientX - startX);
-                if (newWidth > 60) box.style.width = newWidth + 'px';
-            }
-            if (currentHandle === 'b' || currentHandle === 'se') {
-                const newHeight = startHeight + (e.clientY - startY);
-                if (newHeight > 30) box.style.height = newHeight + 'px';
+                if (newWidth > 80) box.style.width = newWidth + 'px';
             }
         });
 
