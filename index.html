@@ -31,7 +31,7 @@
         background: #e1e4e8;
         border: 2px dashed #cbd5e1;
         overflow: hidden;
-        cursor: text; /* 마우스 커서를 글자 입력 I-beam 모양으로 지정 */
+        cursor: text;
         user-select: none;
     }
     #preview-image {
@@ -53,7 +53,7 @@
         white-space: pre-wrap;
         word-break: break-all;
         outline: none;
-        cursor: move; /* 이동 시 마우스 커서 */
+        cursor: move;
         min-width: 50px;
     }
     /* 선택된 글상자 가이드 */
@@ -62,7 +62,7 @@
         background: rgba(59, 130, 246, 0.15);
     }
 
-    /* 조작 패널 (우측 입력창 제거, 서식 정보만 보유) */
+    /* 조작 패널 */
     .controls {
         display: flex;
         flex-direction: column;
@@ -155,7 +155,7 @@
                         <input type="color" id="active-color" value="#ffffff">
                     </div>
                     <div style="margin-top: 5px;">
-                        <button class="delete-btn" id="delete-box-btn">글상자 삭제</button>
+                        <button class="delete-btn" id="delete-box-btn">글상자 삭제 (Delete키)</button>
                     </div>
                 </div>
             </div>
@@ -221,7 +221,7 @@
     function createTextbox(x, y, textContent) {
         const box = document.createElement('div');
         box.className = 'text-box';
-        box.contentEditable = "true"; // HTML5 직접 텍스트 편집 기능 활성화
+        box.contentEditable = "true";
         box.textContent = textContent;
         box.style.left = x + 'px';
         box.style.top = y + 'px';
@@ -240,10 +240,8 @@
         editorContainer.appendChild(box);
         selectBox(box);
         
-        // 생성 후 바로 텍스트를 입력할 수 있도록 커서 포커스
         box.focus();
         
-        // 초기 기본 텍스트 드래그(선택) 상태로 만들어 바로 타이핑 가능하게 처리
         const range = document.createRange();
         range.selectNodeContents(box);
         const sel = window.getSelection();
@@ -264,23 +262,54 @@
         activeColor.value = rgbToHex(window.getComputedStyle(selectedBox).color);
     }
 
+    // 글상자 삭제 처리 함수
+    function removeSelectedBox() {
+        if (selectedBox) {
+            selectedBox.remove();
+            selectedBox = null;
+            selectedControls.style.opacity = '0.4';
+            selectedControls.style.pointerEvents = 'none';
+        }
+    }
+
+    // 5. 키보드 Delete / Backspace 키 감지하여 글상자 삭제
+    document.addEventListener('keydown', function(e) {
+        if (!selectedBox) return;
+
+        // Delete 키 또는 Backspace 키
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            // 현재 글상자 내부의 텍스트가 비어있거나, 텍스트 편집 포커스 중이 아닐 때 삭제 처리
+            const isEditingText = document.activeElement === selectedBox;
+            
+            // 텍스트 편집 중이 아니거나 (테두리만 선택된 상태)
+            // 텍스트 편집 중이지만 키 입력 시 글자가 비어있는 경우 삭제
+            if (!isEditingText) {
+                e.preventDefault(); // 기본 뒤로가기/삭제 동작 방지
+                removeSelectedBox();
+            } else if (selectedBox.textContent.trim() === '' && e.key === 'Delete') {
+                e.preventDefault();
+                removeSelectedBox();
+            }
+        }
+    });
+
     // 외부 영역 클릭 시 선택 해제 (단, 내용이 비어있으면 자동 삭제)
     document.addEventListener('click', function(e) {
         if (!editorContainer.contains(e.target) && !document.querySelector('.controls').contains(e.target)) {
             if (selectedBox) {
                 if (!selectedBox.textContent.trim()) {
-                    selectedBox.remove();
+                    removeSelectedBox();
                 } else {
                     selectedBox.classList.remove('selected');
+                    selectedBox = null;
+                    selectedControls.style.opacity = '0.4';
+                    selectedControls.style.pointerEvents = 'none';
                 }
-                selectedBox = null;
-                selectedControls.style.opacity = '0.4';
-                selectedControls.style.pointerEvents = 'none';
             }
         }
     });
 
-    // 5. 서식 변경 즉시 반영
+    // 6. 서식 변경 즉시 반영
     activeSize.addEventListener('input', () => {
         if (selectedBox) selectedBox.style.fontSize = activeSize.value + 'px';
     });
@@ -288,23 +317,15 @@
         if (selectedBox) selectedBox.style.color = activeColor.value;
     });
 
-    // 6. 삭제 기능
-    deleteBoxBtn.addEventListener('click', () => {
-        if (selectedBox) {
-            selectedBox.remove();
-            selectedBox = null;
-            selectedControls.style.opacity = '0.4';
-            selectedControls.style.pointerEvents = 'none';
-        }
-    });
+    // 7. 삭제 버튼 클릭 시 처리
+    deleteBoxBtn.addEventListener('click', removeSelectedBox);
 
-    // 7. 드래그 앤 드롭 이동
+    // 8. 드래그 앤 드롭 이동
     function initDragAndDrop(box) {
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
 
         box.addEventListener('mousedown', function(e) {
-            // 커서가 텍스트 편집 중일 때는 드래그 동작이 글자 선택과 충돌하지 않도록 조정
             if (document.activeElement === box) return;
 
             isDragging = true;
