@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>밈/카드 제작 도구: 글상자 레이아웃 안정화</title>
+<title>밈/카드 제작 도구: 4단계 템플릿 관리 시스템</title>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -41,7 +41,7 @@
         pointer-events: none;
     }
     
-    /* 글상자 구조 개선 (높이 자동 조절 및 텍스트 겹침 방지) */
+    /* 글상자 스타일 */
     .text-box {
         position: absolute;
         color: white;
@@ -50,25 +50,23 @@
         text-shadow: 2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9);
         padding: 8px 12px;
         border: 2px dashed transparent;
-        
         white-space: pre-wrap;       
         word-break: break-all;       
         overflow-wrap: break-word;   
-        
         outline: none;
         min-width: 100px;
         max-width: 380px;            
-        height: auto;                /* 내용에 맞춰 세로 크기가 유연하게 조절되도록 수정 */
+        height: auto;
         box-sizing: border-box;
         text-align: center;
-        line-height: 1.35;           /* 줄 간격 최적화로 겹침 현상 방지 */
+        line-height: 1.35;
     }
     .text-box.selected {
         border-color: #3b82f6;
         background: rgba(59, 130, 246, 0.12);
     }
 
-    /* 상단 이동 핸들 (텍스트 영역을 침범하지 않도록 상단 바 형태로 분리) */
+    /* 상단 이동 핸들 */
     .drag-handle {
         position: absolute;
         top: -18px;
@@ -104,7 +102,6 @@
         display: block;
     }
     .handle-r { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
-    .handle-b { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
     .handle-se { bottom: -5px; right: -5px; cursor: se-resize; }
 
     /* 조작 패널 */
@@ -112,7 +109,7 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
-        width: 280px;
+        width: 300px;
     }
     .control-group {
         background: #f8fafc;
@@ -145,8 +142,8 @@
         color: white;
         border-color: #2563eb;
     }
-    .delete-btn {
-        background: #ef4444;
+    .action-btn {
+        background: #10b981;
         color: white;
         border: none;
         padding: 8px 10px;
@@ -154,13 +151,57 @@
         cursor: pointer;
         width: 100%;
         font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .action-btn:hover { background: #059669; }
+    
+    .delete-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-weight: bold;
     }
     .delete-btn:hover { background: #dc2626; }
+
+    /* 템플릿 목록 스타일 */
+    .template-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        padding: 6px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        font-size: 13px;
+    }
+    .template-item span {
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+    }
+    .template-item span:hover { color: #2563eb; font-weight: bold; }
+    .template-del {
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 3px 6px;
+        cursor: pointer;
+        font-size: 11px;
+        margin-left: 5px;
+    }
 </style>
 </head>
 <body>
 
-    <h2>밈 & 카드뉴스 제작 도구 (텍스트 레이아웃 수정 완료)</h2>
+    <h2>밈 & 카드뉴스 제작 도구 (4단계 - 템플릿 관리 시스템)</h2>
     
     <div class="workspace">
         <!-- 미리보기 화면 -->
@@ -171,8 +212,18 @@
             </div>
         </div>
 
-        <!-- 서식 조작 패널 -->
+        <!-- 서식 및 템플릿 조작 패널 -->
         <div class="controls">
+            <!-- 4단계 핵심: 템플릿 관리 영역 -->
+            <div class="control-group" style="background: #eff6ff; border-color: #bfdbfe;">
+                <label style="color: #1e40af;">템플릿 관리 (생성/불러오기/수정/삭제)</label>
+                <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:6px; box-sizing:border-box; margin-bottom:6px; border:1px solid #93c5fd; border-radius:4px;">
+                <button class="action-btn" id="save-template-btn">현재 상태를 템플릿으로 저장</button>
+                <div style="max-height: 120px; overflow-y: auto; margin-top: 8px;" id="template-list-container">
+                    <!-- 저장된 템플릿 목록이 동적으로 표시됩니다 -->
+                </div>
+            </div>
+
             <div class="control-group">
                 <label>비율 선택</label>
                 <div class="ratio-btns">
@@ -226,8 +277,13 @@
     const deleteBoxBtn = document.getElementById('delete-box-btn');
     const ratioBtns = document.querySelectorAll('.ratio-btn');
     const alignBtns = document.querySelectorAll('.align-btn');
+    
+    const templateNameInput = document.getElementById('template-name-input');
+    const saveTemplateBtn = document.getElementById('save-template-btn');
+    const templateListContainer = document.getElementById('template-list-container');
 
     let selectedBox = null;
+    let currentRatio = '1:1';
 
     // 1. 비율 선택
     ratioBtns.forEach(btn => {
@@ -235,19 +291,29 @@
             ratioBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            const ratio = btn.getAttribute('data-ratio');
-            if (ratio === '1:1') {
-                editorContainer.style.width = '400px';
-                editorContainer.style.height = '400px';
-            } else if (ratio === '4:5') {
-                editorContainer.style.width = '360px';
-                editorContainer.style.height = '450px';
-            } else if (ratio === '9:16') {
-                editorContainer.style.width = '280px';
-                editorContainer.style.height = '497px';
-            }
+            currentRatio = btn.getAttribute('data-ratio');
+            applyRatio(currentRatio);
         });
     });
+
+    function applyRatio(ratio) {
+        currentRatio = ratio;
+        ratioBtns.forEach(b => {
+            if (b.getAttribute('data-ratio') === ratio) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+
+        if (ratio === '1:1') {
+            editorContainer.style.width = '400px';
+            editorContainer.style.height = '400px';
+        } else if (ratio === '4:5') {
+            editorContainer.style.width = '360px';
+            editorContainer.style.height = '450px';
+        } else if (ratio === '9:16') {
+            editorContainer.style.width = '280px';
+            editorContainer.style.height = '497px';
+        }
+    }
 
     // 2. 이미지 업로드
     uploadBtn.addEventListener('change', function(event) {
@@ -269,16 +335,20 @@
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        createTextbox(x, y, "문구를 입력하세요");
+        createTextbox(x, y, "문구를 입력하세요", 24, "#ffffff", "center", "150px");
     });
 
-    function createTextbox(x, y, textContent) {
+    function createTextbox(x, y, textContent, fontSize, fontColor, textAlign, boxWidth) {
         const box = document.createElement('div');
         box.className = 'text-box';
         box.contentEditable = "true";
         box.textContent = textContent;
         box.style.left = x + 'px';
         box.style.top = y + 'px';
+        box.style.fontSize = fontSize + 'px';
+        box.style.color = fontColor;
+        box.style.textAlign = textAlign;
+        if (boxWidth) box.style.width = boxWidth;
 
         const dragHandle = document.createElement('div');
         dragHandle.className = 'drag-handle';
@@ -288,20 +358,16 @@
         const handleR = document.createElement('div');
         handleR.className = 'resize-handle handle-r';
         handleR.contentEditable = "false";
-        const handleB = document.createElement('div');
-        handleB.className = 'resize-handle handle-b';
-        handleB.contentEditable = "false";
         const handleSE = document.createElement('div');
         handleSE.className = 'resize-handle handle-se';
         handleSE.contentEditable = "false";
 
         box.appendChild(dragHandle);
         box.appendChild(handleR);
-        box.appendChild(handleB);
         box.appendChild(handleSE);
 
         initStableDrag(box, dragHandle);
-        initResize(box, handleR, handleB, handleSE);
+        initResize(box, handleR, handleSE);
 
         box.addEventListener('focus', function() {
             selectBox(box);
@@ -315,13 +381,7 @@
         editorContainer.appendChild(box);
         selectBox(box);
         
-        box.focus();
-        
-        const range = document.createRange();
-        range.selectNodeContents(box);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        return box;
     }
 
     // 4. 글상자 선택 관리
@@ -397,7 +457,7 @@
 
     deleteBoxBtn.addEventListener('click', removeSelectedBox);
 
-    // 5. 안정화된 드래그 로직
+    // 5. 드래그 로직
     function initStableDrag(box, dragHandle) {
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
@@ -432,11 +492,11 @@
         });
     }
 
-    // 6. 리사이즈 기능 (너비만 조절 가능하도록 핸들 최적화)
-    function initResize(box, handleR, handleB, handleSE) {
+    // 6. 리사이즈 기능
+    function initResize(box, handleR, handleSE) {
         let isResizing = false;
         let currentHandle = null;
-        let startX, startY, startWidth;
+        let startX, startWidth;
 
         function startResize(e, handle) {
             isResizing = true;
@@ -449,7 +509,6 @@
 
         handleR.addEventListener('mousedown', (e) => startResize(e, 'r'));
         handleSE.addEventListener('mousedown', (e) => startResize(e, 'se'));
-        // 세로 크기는 글자 양에 따라 자동 조절되므로 하단 핸들은 비활성화하거나 너비 연동으로 처리
 
         document.addEventListener('mousemove', function(e) {
             if (!isResizing || selectedBox !== box) return;
@@ -465,6 +524,130 @@
             currentHandle = null;
         });
     }
+
+    // ==========================================
+    // 4단계: 템플릿 관리 시스템 (LocalStorage 연동)
+    // ==========================================
+
+    // 템플릿 저장 (생성/수정)
+    saveTemplateBtn.addEventListener('click', () => {
+        const name = templateNameInput.value.trim();
+        if (!name) {
+            alert('템플릿 이름을 입력해 주세요!');
+            return;
+        }
+
+        // 현재 화면의 모든 텍스트 박스 정보 수집
+        const textBoxesData = [];
+        document.querySelectorAll('.text-box').forEach(box => {
+            textBoxesData.push({
+                text: box.textContent,
+                left: box.style.left,
+                top: box.style.top,
+                width: box.style.width,
+                fontSize: box.style.fontSize,
+                color: box.style.color,
+                textAlign: box.style.textAlign
+            });
+        });
+
+        const templateData = {
+            name: name,
+            ratio: currentRatio,
+            imageSrc: previewImage.src || '',
+            textBoxes: textBoxesData
+        };
+
+        // LocalStorage에서 기존 템플릿 목록 불러오기
+        let templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
+        
+        // 동일한 이름이 있으면 덮어쓰기(수정), 없으면 추가
+        const existingIndex = templates.findIndex(t => t.name === name);
+        if (existingIndex >= 0) {
+            templates[existingIndex] = templateData;
+        } else {
+            templates.push(templateData);
+        }
+
+        localStorage.setItem('meme_templates', JSON.stringify(templates));
+        templateNameInput.value = '';
+        renderTemplateList();
+        alert(`템플릿 "${name}"이(가) 안전하게 저장되었습니다!`);
+    });
+
+    // 템플릿 불러오기
+    window.loadTemplate = function(name) {
+        const templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
+        const template = templates.find(t => t.name === name);
+        if (!template) return;
+
+        // 기존 텍스트 박스 모두 제거
+        document.querySelectorAll('.text-box').forEach(b => b.remove());
+        selectedBox = null;
+        selectedControls.style.opacity = '0.4';
+        selectedControls.style.pointerEvents = 'none';
+
+        // 비율 및 이미지 복원
+        applyRatio(template.ratio);
+        previewImage.src = template.imageSrc;
+
+        // 텍스트 박스들 복원
+        template.textBoxes.forEach(data => {
+            createTextbox(
+                parseInt(data.left) || 20,
+                parseInt(data.top) || 20,
+                data.text,
+                parseInt(data.fontSize) || 24,
+                data.color || '#ffffff',
+                data.textAlign || 'center',
+                data.width || '150px'
+            );
+        });
+    };
+
+    // 템플릿 삭제
+    window.deleteTemplate = function(name, event) {
+        event.stopPropagation();
+        if (!confirm(`정말 "${name}" 템플릿을 삭제하시겠습니까?`)) return;
+
+        let templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
+        templates = templates.filter(t => t.name !== name);
+        localStorage.setItem('meme_templates', JSON.stringify(templates));
+        renderTemplateList();
+    };
+
+    // 템플릿 목록 화면 렌더링
+    function renderTemplateList() {
+        const templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
+        templateListContainer.innerHTML = '';
+
+        if (templates.length === 0) {
+            templateListContainer.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:10px;">저장된 템플릿이 없습니다.</div>';
+            return;
+        }
+
+        templates.forEach(t => {
+            const item = document.createElement('div');
+            item.className = 'template-item';
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = t.name;
+            titleSpan.title = "클릭하여 불러오기";
+            titleSpan.onclick = () => loadTemplate(t.name);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'template-del';
+            delBtn.textContent = '삭제';
+            delBtn.onclick = (e) => deleteTemplate(t.name, e);
+
+            item.appendChild(titleSpan);
+            item.appendChild(delBtn);
+            templateListContainer.appendChild(item);
+        });
+    }
+
+    // 페이지 접속 시 저장된 템플릿 목록 자동 로드
+    renderTemplateList();
 
     function rgbToHex(rgb) {
         if (!rgb || rgb.startsWith('#')) return rgb;
