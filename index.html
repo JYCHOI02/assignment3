@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>밈/카드 제작 도구</title>
-<!-- 미리보기 DOM을 고화질 이미지로 변환하는 라이브러리 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -25,7 +23,6 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    /* 미리보기 영역 */
     #editor-container {
         position: relative;
         width: 400px;
@@ -44,7 +41,6 @@
         pointer-events: none;
     }
     
-    /* 글상자 스타일 (max-width: 100%로 비율별 오차 방지) */
     .text-box {
         position: absolute;
         color: white;
@@ -57,8 +53,8 @@
         word-break: break-all;       
         overflow-wrap: break-word;   
         outline: none;
-        min-width: 80px;
-        max-width: 100%;            
+        min-width: 100px;
+        max-width: 380px;            
         height: auto;
         box-sizing: border-box;
         text-align: center;
@@ -69,7 +65,6 @@
         background: rgba(59, 130, 246, 0.12);
     }
 
-    /* 상단 이동 핸들 */
     .drag-handle {
         position: absolute;
         top: -18px;
@@ -90,7 +85,6 @@
     }
     .text-box.selected .drag-handle { display: flex; }
 
-    /* 리사이즈 조절점 핸들 */
     .resize-handle {
         position: absolute;
         width: 8px;
@@ -103,7 +97,6 @@
     .handle-r { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
     .handle-se { bottom: -5px; right: -5px; cursor: se-resize; }
 
-    /* 조작 패널 */
     .controls {
         display: flex;
         flex-direction: column;
@@ -520,7 +513,11 @@
         document.addEventListener('mouseup', function() { isResizing = false; });
     }
 
-    // 위치 오차 보정 내려받기 함수
+    // 캔버스 직접 그리기 기반 내려받기 엔진
+    // (기존 SVG/foreignObject 방식은 브라우저별로 이미지 로드가 불안정해 제거)
+    // 대신 실제 위치 오차의 원인이었던 두 가지를 정확히 반영:
+    //  1) word-break: break-all에 의한 자동 줄바꿈을 직접 계산
+    //  2) box-sizing: border-box로 인해 생기는 2px 테두리 여백을 반영
     downloadBtn.addEventListener('click', function() {
         if (selectedBox) {
             selectedBox.classList.remove('selected');
@@ -529,29 +526,127 @@
             selectedControls.style.pointerEvents = 'none';
         }
 
-        // 테두리 2px 오차 방지를 위해 임시 제거
-        const originalBorder = editorContainer.style.border;
-        editorContainer.style.border = 'none';
+        const width = editorContainer.offsetWidth;
+        const height = editorContainer.offsetHeight;
 
-        html2canvas(editorContainer, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: null,
-            scrollX: -window.scrollX,
-            scrollY: -window.scrollY
-        }).then(canvas => {
-            editorContainer.style.border = originalBorder;
+        const canvas = document.createElement('canvas');
+        canvas.width = width * 2; // 2배 고화질
+        canvas.height = height * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
 
+        const drawCanvas = () => {
+            // 1. 배경 이미지 그리기 (object-fit: cover와 동일하게 크롭)
+            if (previewImage.src && previewImage.complete && previewImage.naturalWidth > 0) {
+                const imgRatio = previewImage.naturalWidth / previewImage.naturalHeight;
+                const containerRatio = width / height;
+                let sWidth = previewImage.naturalWidth;
+                let sHeight = previewImage.naturalHeight;
+                let sx = 0, sy = 0;
+
+                if (imgRatio > containerRatio) {
+                    sWidth = previewImage.naturalHeight * containerRatio;
+                    sx = (previewImage.naturalWidth - sWidth) / 2;
+                } else {
+                    sHeight = previewImage.naturalWidth / containerRatio;
+                    sy = (previewImage.naturalHeight - sHeight) / 2;
+                }
+                ctx.drawImage(previewImage, sx, sy, sWidth, sHeight, 0, 0, width, height);
+            } else {
+                ctx.fillStyle = '#e1e4e8';
+                ctx.fillRect(0, 0, width, height);
+            }
+
+            // 2. 텍스트 박스 그리기
+            const boxes = editorContainer.querySelectorAll('.text-box');
+            boxes.forEach(box => {
+                const style = window.getComputedStyle(box);
+                const fontSize = parseFloat(style.fontSize);
+                const color = style.color;
+                const textAlign = style.textAlign || 'center';
+                const lineHeight = parseFloat(style.lineHeight) || (fontSize * 1.35);
+
+                // box-sizing: border-box 이므로 테두리/패딩 두께만큼 내용 영역이 안으로 들어감
+                const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+                const borderRight = parseFloat(style.borderRightWidth) || 0;
+                const borderTop = parseFloat(style.borderTopWidth) || 0;
+                const paddingLeft = parseFloat(style.paddingLeft) || 0;
+                const paddingRight = parseFloat(style.paddingRight) || 0;
+                const paddingTop = parseFloat(style.paddingTop) || 0;
+
+                const left = box.offsetLeft;
+                const top = box.offsetTop;
+                const outerWidth = box.offsetWidth;
+                const contentWidth = Math.max(1, outerWidth - borderLeft - borderRight - paddingLeft - paddingRight);
+
+                ctx.font = `bold ${fontSize}px 'Apple SD Gothic Neo', sans-serif`;
+                ctx.fillStyle = color;
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+
+                let drawX;
+                if (textAlign === 'center') {
+                    ctx.textAlign = 'center';
+                    drawX = left + outerWidth / 2; // 좌우 테두리 두께가 같아 중앙값은 그대로
+                } else if (textAlign === 'right') {
+                    ctx.textAlign = 'right';
+                    drawX = left + outerWidth - borderRight - paddingRight;
+                } else {
+                    ctx.textAlign = 'left';
+                    drawX = left + borderLeft + paddingLeft;
+                }
+
+                // 명시적 줄바꿈(엔터) + word-break: break-all과 동일한 글자 단위 자동 줄바꿈 재현
+                const rawText = box.innerText.replace(/\n$/, '');
+                const lines = wrapTextLikeCss(ctx, rawText, contentWidth);
+
+                let currentY = top + borderTop + paddingTop + fontSize * 0.85;
+                lines.forEach(line => {
+                    ctx.fillText(line, drawX, currentY);
+                    currentY += lineHeight;
+                });
+            });
+
+            // 3. 파일 다운로드
             const link = document.createElement('a');
             link.download = `meme_${currentRatio.replace(':', '_')}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-        }).catch(err => {
-            editorContainer.style.border = originalBorder;
-            console.error(err);
-        });
+        };
+
+        if (previewImage.src && !previewImage.complete) {
+            previewImage.onload = drawCanvas;
+        } else {
+            drawCanvas();
+        }
     });
+
+    // .text-box의 word-break: break-all + max-width 줄바꿈을 그대로 재현
+    // (엔터로 만든 줄은 유지하고, 폭을 넘으면 글자 단위로 강제 줄바꿈)
+    function wrapTextLikeCss(ctx, text, maxWidth) {
+        const paragraphs = text.split('\n');
+        const lines = [];
+        paragraphs.forEach(paragraph => {
+            if (paragraph.length === 0) {
+                lines.push('');
+                return;
+            }
+            let currentLine = '';
+            for (const ch of paragraph) {
+                const testLine = currentLine + ch;
+                if (currentLine.length > 0 && ctx.measureText(testLine).width > maxWidth) {
+                    lines.push(currentLine);
+                    currentLine = ch;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            lines.push(currentLine);
+        });
+        return lines;
+    }
 
     saveTemplateBtn.addEventListener('click', () => {
         const name = templateNameInput.value.trim();
