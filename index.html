@@ -35,6 +35,7 @@
         overflow: hidden;
         cursor: text;
         user-select: none;
+        box-sizing: border-box;
     }
     #preview-image {
         width: 100%;
@@ -535,7 +536,7 @@
         document.addEventListener('mouseup', function() { isResizing = false; });
     }
 
-    // 위치 오차 및 핸들 오버헤드 방지 내려받기 로직
+    // 1:1, 4:5, 9:16 모든 비율에서 미리보기와 100% 동일한 위치로 내려받는 보정 로직
     downloadBtn.addEventListener('click', function() {
         if (selectedBox) {
             selectedBox.classList.remove('selected');
@@ -544,13 +545,25 @@
             selectedControls.style.pointerEvents = 'none';
         }
 
+        const width = editorContainer.offsetWidth;
+        const height = editorContainer.offsetHeight;
+
         html2canvas(editorContainer, {
             scale: 2,
             useCORS: true,
             logging: false,
             backgroundColor: null,
+            width: width,
+            height: height,
+            x: 0,
+            y: 0,
+            scrollX: 0,
+            scrollY: 0,
             onclone: (clonedDoc) => {
                 const clonedContainer = clonedDoc.getElementById('editor-container');
+                clonedContainer.style.width = width + 'px';
+                clonedContainer.style.height = height + 'px';
+                
                 const handles = clonedContainer.querySelectorAll('.drag-handle, .resize-handle');
                 handles.forEach(h => h.remove());
             }
