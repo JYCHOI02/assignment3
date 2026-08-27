@@ -513,8 +513,10 @@
         document.addEventListener('mouseup', function() { isResizing = false; });
     }
 
-    // HTML5 Native Canvas 기반 내려받기 엔진 (위치 오차 0%)
-    downloadBtn.addEventListener('click', function() {
+    // SVG(foreignObject) 기반 내려받기 엔진
+    // 미리보기 DOM(editor-container)을 그대로 복제해 이미지로 변환하기 때문에
+    // 줄바꿈/정렬/폰트/그림자까지 화면에 보이는 것과 100% 동일하게 출력됩니다.
+    downloadBtn.addEventListener('click', async function() {
         if (selectedBox) {
             selectedBox.classList.remove('selected');
             selectedBox = null;
@@ -525,91 +527,87 @@
         const width = editorContainer.offsetWidth;
         const height = editorContainer.offsetHeight;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width * 2; // 2배 고화질
-        canvas.height = height * 2;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
+        try {
+            const svgDataUrl = await buildEditorSvgDataUrl(width, height);
 
-        const drawCanvas = () => {
-            // 1. 배경 이미지 그리기
-            if (previewImage.src && previewImage.complete && previewImage.naturalWidth > 0) {
-                const imgRatio = previewImage.naturalWidth / previewImage.naturalHeight;
-                const containerRatio = width / height;
-                let sWidth = previewImage.naturalWidth;
-                let sHeight = previewImage.naturalHeight;
-                let sx = 0, sy = 0;
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = width * 2; // 2배 고화질
+                canvas.height = height * 2;
+                const ctx = canvas.getContext('2d');
+                ctx.scale(2, 2);
+                ctx.drawImage(img, 0, 0, width, height);
 
-                if (imgRatio > containerRatio) {
-                    sWidth = previewImage.naturalHeight * containerRatio;
-                    sx = (previewImage.naturalWidth - sWidth) / 2;
-                } else {
-                    sHeight = previewImage.naturalWidth / containerRatio;
-                    sy = (previewImage.naturalHeight - sHeight) / 2;
-                }
-                ctx.drawImage(previewImage, sx, sy, sWidth, sHeight, 0, 0, width, height);
-            } else {
-                ctx.fillStyle = '#e1e4e8';
-                ctx.fillRect(0, 0, width, height);
-            }
-
-            // 2. 텍스트 박스 그리기
-            const boxes = editorContainer.querySelectorAll('.text-box');
-            boxes.forEach(box => {
-                const style = window.getComputedStyle(box);
-                const fontSize = parseFloat(style.fontSize);
-                const color = style.color;
-                const textAlign = style.textAlign || 'center';
-                const lineHeight = parseFloat(style.lineHeight) || (fontSize * 1.35);
-
-                const left = box.offsetLeft;
-                const top = box.offsetTop;
-                const boxWidth = box.offsetWidth;
-                const paddingLeft = parseFloat(style.paddingLeft);
-                const paddingTop = parseFloat(style.paddingTop);
-
-                ctx.font = `bold ${fontSize}px 'Apple SD Gothic Neo', sans-serif`;
-                ctx.fillStyle = color;
-                ctx.shadowColor = 'rgba(0,0,0,0.9)';
-                ctx.shadowBlur = 4;
-                ctx.shadowOffsetX = 2;
-                ctx.shadowOffsetY = 2;
-
-                let drawX = left + paddingLeft;
-                if (textAlign === 'center') {
-                    ctx.textAlign = 'center';
-                    drawX = left + boxWidth / 2;
-                } else if (textAlign === 'right') {
-                    ctx.textAlign = 'right';
-                    drawX = left + boxWidth - parseFloat(style.paddingRight);
-                } else {
-                    ctx.textAlign = 'left';
-                }
-
-                // 줄바꿈 계산
-                const rawText = box.innerText.replace(/\n$/, '');
-                const lines = rawText.split('\n');
-                let currentY = top + paddingTop + fontSize * 0.85;
-
-                lines.forEach(line => {
-                    ctx.fillText(line, drawX, currentY);
-                    currentY += lineHeight;
-                });
-            });
-
-            // 3. 파일 다운로드
-            const link = document.createElement('a');
-            link.download = `meme_${currentRatio.replace(':', '_')}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        };
-
-        if (previewImage.src && !previewImage.complete) {
-            previewImage.onload = drawCanvas;
-        } else {
-            drawCanvas();
+                const link = document.createElement('a');
+                link.download = `meme_${currentRatio.replace(':', '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            img.onerror = function() {
+                alert('이미지 생성 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            };
+            img.src = svgDataUrl;
+        } catch (err) {
+            console.error(err);
+            alert('이미지 생성 중 오류가 발생했습니다. 다시 시도해 주세요.');
         }
     });
+
+    // editor-container를 그대로 복제해 SVG foreignObject로 감싼 data URL 생성
+    function buildEditorSvgDataUrl(width, height) {
+        return new Promise((resolve, reject) => {
+            try {
+                const clone = editorContainer.cloneNode(true);
+                clone.removeAttribute('id');
+                clone.style.border = 'none'; // 편집용 점선 테두리는 결과물에서 제거
+                clone.style.boxSizing = 'border-box';
+                clone.style.width = width + 'px';
+                clone.style.height = height + 'px';
+                clone.style.margin = '0';
+
+                // 편집 UI 요소(드래그 핸들, 리사이즈 핸들) 제거
+                clone.querySelectorAll('.drag-handle, .resize-handle').forEach(el => el.remove());
+
+                // 텍스트 박스의 선택 표시/편집 커서 제거
+                clone.querySelectorAll('.text-box').forEach(box => {
+                    box.classList.remove('selected');
+                    box.removeAttribute('contenteditable');
+                    box.style.border = '2px solid transparent';
+                    box.style.outline = 'none';
+                    box.style.cursor = 'default';
+                });
+
+                // 현재 페이지의 <style> 규칙을 그대로 재사용해 동일한 CSS가 적용되도록 함
+                const cssText = Array.from(document.styleSheets)
+                    .filter(sheet => !sheet.href) // 인라인 <style> 태그만 대상
+                    .map(sheet => {
+                        try {
+                            return Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n');
+                        } catch (e) {
+                            return '';
+                        }
+                    })
+                    .join('\n');
+
+                const serializedHTML = clone.outerHTML;
+
+                const svgString =
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
+                    '<foreignObject x="0" y="0" width="' + width + '" height="' + height + '">' +
+                    '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + width + 'px;height:' + height + 'px;overflow:hidden;">' +
+                    '<style>' + cssText + '</style>' +
+                    serializedHTML +
+                    '</div>' +
+                    '</foreignObject>' +
+                    '</svg>';
+
+                resolve('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString));
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
 
     saveTemplateBtn.addEventListener('click', () => {
         const name = templateNameInput.value.trim();
