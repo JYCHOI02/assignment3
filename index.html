@@ -102,6 +102,44 @@
         height: 100%;
         object-fit: cover;
         pointer-events: none;
+        display: none;
+    }
+
+    /* 이미지 미업로드 시 플레이스홀더 디자인 */
+    .empty-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        pointer-events: none;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        box-sizing: border-box;
+    }
+
+    .placeholder-icon {
+        font-size: 42px;
+        margin-bottom: 12px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+    }
+
+    .placeholder-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+
+    .placeholder-sub {
+        font-size: 12px;
+        color: #94a3b8;
+        line-height: 1.5;
     }
 
     .text-box {
@@ -436,7 +474,12 @@
         <div class="preview-section">
             <span class="section-label">🖥️ 실시간 미리보기</span>
             <div id="editor-container">
-                <img id="preview-image" src="" alt="이미지를 업로드하세요">
+                <img id="preview-image" src="" alt="">
+                <div id="empty-placeholder" class="empty-placeholder">
+                    <div class="placeholder-icon">🖼️</div>
+                    <div class="placeholder-title">배경 이미지를 업로드해 주세요</div>
+                    <div class="placeholder-sub">여기를 클릭하여 바로 문구를 추가하거나<br>왼쪽 버튼에서 파일 업로드가 가능합니다</div>
+                </div>
             </div>
         </div>
 
@@ -501,6 +544,7 @@
     const uploadBtn = document.getElementById('upload-btn');
     const fileError = document.getElementById('file-error');
     const previewImage = document.getElementById('preview-image');
+    const emptyPlaceholder = document.getElementById('empty-placeholder');
     const editorContainer = document.getElementById('editor-container');
     const downloadBtn = document.getElementById('download-btn');
     const resetCanvasBtn = document.getElementById('reset-canvas-btn');
@@ -519,6 +563,18 @@
 
     let selectedBox = null;
     let currentRatio = '1:1';
+
+    // 배경 이미지 유무에 따른 플레이스홀더 표시/숨김
+    function updatePlaceholderVisibility() {
+        const src = previewImage.getAttribute('src');
+        if (src && src.trim() !== '' && src !== window.location.href) {
+            previewImage.style.display = 'block';
+            if (emptyPlaceholder) emptyPlaceholder.style.display = 'none';
+        } else {
+            previewImage.style.display = 'none';
+            if (emptyPlaceholder) emptyPlaceholder.style.display = 'flex';
+        }
+    }
 
     function compressImageSrc(srcUrl, maxWidth = 600, quality = 0.6) {
         return new Promise((resolve) => {
@@ -583,12 +639,18 @@
 
     function loadCurrentState() {
         const saved = localStorage.getItem('active_meme_state');
-        if (!saved) return;
+        if (!saved) {
+            updatePlaceholderVisibility();
+            return;
+        }
 
         try {
             const state = JSON.parse(saved);
             if (state.ratio) applyRatio(state.ratio);
-            if (state.imageSrc) previewImage.src = state.imageSrc;
+            if (state.imageSrc) {
+                previewImage.src = state.imageSrc;
+            }
+            updatePlaceholderVisibility();
 
             if (state.textBoxes && Array.isArray(state.textBoxes)) {
                 document.querySelectorAll('.text-box').forEach(b => b.remove());
@@ -607,6 +669,7 @@
             }
         } catch (e) {
             console.error('상태 복원 중 오류:', e);
+            updatePlaceholderVisibility();
         }
     }
 
@@ -636,7 +699,6 @@
         saveCurrentState();
     }
 
-    // 현재 작업 내용 전체 초기화 기능
     resetCanvasBtn.addEventListener('click', function() {
         if (!confirm('현재 작업 중인 글상자와 배경 이미지를 모두 초기화하시겠습니까?')) return;
 
@@ -645,7 +707,10 @@
         selectedControls.style.opacity = '0.4';
         selectedControls.style.pointerEvents = 'none';
 
+        previewImage.removeAttribute('src');
         previewImage.src = '';
+        updatePlaceholderVisibility();
+
         uploadBtn.value = '';
         fileError.style.display = 'none';
 
@@ -698,6 +763,7 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             previewImage.src = e.target.result;
+            updatePlaceholderVisibility();
             saveCurrentState();
         }
         reader.readAsDataURL(file);
@@ -709,7 +775,7 @@
     }, true);
 
     editorContainer.addEventListener('click', function(e) {
-        if (e.target !== editorContainer && e.target !== previewImage) return;
+        if (e.target !== editorContainer && e.target !== previewImage && e.target !== emptyPlaceholder) return;
 
         if (mouseDownTarget && mouseDownTarget.closest && mouseDownTarget.closest('.text-box')) {
             return;
@@ -944,7 +1010,8 @@
         ctx.scale(2, 2);
 
         const drawCanvas = () => {
-            if (previewImage.src && previewImage.complete && previewImage.naturalWidth > 0) {
+            const hasImg = previewImage.src && previewImage.complete && previewImage.naturalWidth > 0 && previewImage.style.display !== 'none';
+            if (hasImg) {
                 const imgRatio = previewImage.naturalWidth / previewImage.naturalHeight;
                 const containerRatio = width / height;
                 let sWidth = previewImage.naturalWidth;
@@ -1119,7 +1186,8 @@
         selectedControls.style.pointerEvents = 'none';
 
         applyRatio(template.ratio);
-        previewImage.src = template.imageSrc;
+        previewImage.src = template.imageSrc || '';
+        updatePlaceholderVisibility();
 
         template.textBoxes.forEach(data => {
             createTextbox(
