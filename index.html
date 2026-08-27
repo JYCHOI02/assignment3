@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>밈/카드 제작 도구 (내려받기 완료 버전)</title>
-<!-- 미리보기 DOM을 이미지로 고화질 변환해주는 라이브러리 -->
+<title>밈/카드 제작 도구</title>
+<!-- 미리보기 DOM을 고화질 이미지로 변환하는 라이브러리 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     body {
@@ -68,7 +68,7 @@
         background: rgba(59, 130, 246, 0.12);
     }
 
-    /* 상단 이동 핸들 (다운로드 시 출력 제외) */
+    /* 상단 이동 핸들 */
     .drag-handle {
         position: absolute;
         top: -18px;
@@ -91,7 +91,7 @@
         display: flex;
     }
 
-    /* 리사이즈 조절점 핸들 (다운로드 시 출력 제외) */
+    /* 리사이즈 조절점 핸들 */
     .resize-handle {
         position: absolute;
         width: 8px;
@@ -157,7 +157,7 @@
     }
     .action-btn:hover { background: #059669; }
 
-    /* 이미지 내려받기 버튼 (T03-C11, C12, C13 대응) */
+    /* 내려받기 버튼 */
     .download-btn {
         background: #2563eb;
         color: white;
@@ -237,7 +237,7 @@
 
         <!-- 서식 및 조작 패널 -->
         <div class="controls">
-            <!-- T03-C11, C12, C13: 내려받기 버튼 -->
+            <!-- 내려받기 버튼 -->
             <button class="download-btn" id="download-btn">완성 이미지 내려받기 (.PNG)</button>
 
             <!-- 템플릿 관리 -->
@@ -535,12 +535,8 @@
         document.addEventListener('mouseup', function() { isResizing = false; });
     }
 
-    // =======================================================
-    // T03-C11, C12, C13: 내려받기 기능 (html2canvas)
-    // =======================================================
-    // T03-C11, C12, C13 완벽 대응: 위치 밀림 방지 내려받기 로직
+    // 위치 오차 및 핸들 오버헤드 방지 내려받기 로직
     downloadBtn.addEventListener('click', function() {
-    // 1. 위치 오차를 일으키는 선택 상태 및 핸들 일시 제거
         if (selectedBox) {
             selectedBox.classList.remove('selected');
             selectedBox = null;
@@ -548,14 +544,12 @@
             selectedControls.style.pointerEvents = 'none';
         }
 
-    // 2. html2canvas 옵션 보정 (위치 밀림 및 렌더링 오차 방지)
         html2canvas(editorContainer, {
-            scale: 2,             // 고화질 출력
-            useCORS: true,        // 이미지 CORS 지원
+            scale: 2,
+            useCORS: true,
             logging: false,
             backgroundColor: null,
             onclone: (clonedDoc) => {
-            // 복제된 DOM에서 핸들 및 외곽선 요소 완전히 제거하여 위치 오차 방지
                 const clonedContainer = clonedDoc.getElementById('editor-container');
                 const handles = clonedContainer.querySelectorAll('.drag-handle, .resize-handle');
                 handles.forEach(h => h.remove());
@@ -567,6 +561,15 @@
             link.click();
         });
     });
+
+    // 템플릿 관리 로직
+    saveTemplateBtn.addEventListener('click', () => {
+        const name = templateNameInput.value.trim();
+        if (!name) {
+            alert('템플릿 이름을 입력해 주세요!');
+            return;
+        }
+
         const textBoxesData = [];
         document.querySelectorAll('.text-box').forEach(box => {
             textBoxesData.push({
