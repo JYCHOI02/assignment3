@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>밈/카드 제작 도구</title>
+<!-- 미리보기 DOM을 고화질 이미지로 변환하는 라이브러리 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -23,6 +25,7 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
+    /* 미리보기 영역 */
     #editor-container {
         position: relative;
         width: 400px;
@@ -41,6 +44,7 @@
         pointer-events: none;
     }
     
+    /* 글상자 스타일 (max-width: 100%로 비율별 오차 방지) */
     .text-box {
         position: absolute;
         color: white;
@@ -53,8 +57,8 @@
         word-break: break-all;       
         overflow-wrap: break-word;   
         outline: none;
-        min-width: 100px;
-        max-width: 380px;            
+        min-width: 80px;
+        max-width: 100%;            
         height: auto;
         box-sizing: border-box;
         text-align: center;
@@ -65,6 +69,7 @@
         background: rgba(59, 130, 246, 0.12);
     }
 
+    /* 상단 이동 핸들 */
     .drag-handle {
         position: absolute;
         top: -18px;
@@ -85,6 +90,7 @@
     }
     .text-box.selected .drag-handle { display: flex; }
 
+    /* 리사이즈 조절점 핸들 */
     .resize-handle {
         position: absolute;
         width: 8px;
@@ -97,6 +103,7 @@
     .handle-r { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
     .handle-se { bottom: -5px; right: -5px; cursor: se-resize; }
 
+    /* 조작 패널 */
     .controls {
         display: flex;
         flex-direction: column;
@@ -513,10 +520,8 @@
         document.addEventListener('mouseup', function() { isResizing = false; });
     }
 
-    // SVG(foreignObject) 기반 내려받기 엔진
-    // 미리보기 DOM(editor-container)을 그대로 복제해 이미지로 변환하기 때문에
-    // 줄바꿈/정렬/폰트/그림자까지 화면에 보이는 것과 100% 동일하게 출력됩니다.
-    downloadBtn.addEventListener('click', async function() {
+    // 위치 오차 보정 내려받기 함수
+    downloadBtn.addEventListener('click', function() {
         if (selectedBox) {
             selectedBox.classList.remove('selected');
             selectedBox = null;
@@ -524,90 +529,29 @@
             selectedControls.style.pointerEvents = 'none';
         }
 
-        const width = editorContainer.offsetWidth;
-        const height = editorContainer.offsetHeight;
+        // 테두리 2px 오차 방지를 위해 임시 제거
+        const originalBorder = editorContainer.style.border;
+        editorContainer.style.border = 'none';
 
-        try {
-            const svgDataUrl = await buildEditorSvgDataUrl(width, height);
+        html2canvas(editorContainer, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: null,
+            scrollX: -window.scrollX,
+            scrollY: -window.scrollY
+        }).then(canvas => {
+            editorContainer.style.border = originalBorder;
 
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = width * 2; // 2배 고화질
-                canvas.height = height * 2;
-                const ctx = canvas.getContext('2d');
-                ctx.scale(2, 2);
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const link = document.createElement('a');
-                link.download = `meme_${currentRatio.replace(':', '_')}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            };
-            img.onerror = function() {
-                alert('이미지 생성 중 오류가 발생했습니다. 다시 시도해 주세요.');
-            };
-            img.src = svgDataUrl;
-        } catch (err) {
+            const link = document.createElement('a');
+            link.download = `meme_${currentRatio.replace(':', '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }).catch(err => {
+            editorContainer.style.border = originalBorder;
             console.error(err);
-            alert('이미지 생성 중 오류가 발생했습니다. 다시 시도해 주세요.');
-        }
-    });
-
-    // editor-container를 그대로 복제해 SVG foreignObject로 감싼 data URL 생성
-    function buildEditorSvgDataUrl(width, height) {
-        return new Promise((resolve, reject) => {
-            try {
-                const clone = editorContainer.cloneNode(true);
-                clone.removeAttribute('id');
-                clone.style.border = 'none'; // 편집용 점선 테두리는 결과물에서 제거
-                clone.style.boxSizing = 'border-box';
-                clone.style.width = width + 'px';
-                clone.style.height = height + 'px';
-                clone.style.margin = '0';
-
-                // 편집 UI 요소(드래그 핸들, 리사이즈 핸들) 제거
-                clone.querySelectorAll('.drag-handle, .resize-handle').forEach(el => el.remove());
-
-                // 텍스트 박스의 선택 표시/편집 커서 제거
-                clone.querySelectorAll('.text-box').forEach(box => {
-                    box.classList.remove('selected');
-                    box.removeAttribute('contenteditable');
-                    box.style.border = '2px solid transparent';
-                    box.style.outline = 'none';
-                    box.style.cursor = 'default';
-                });
-
-                // 현재 페이지의 <style> 규칙을 그대로 재사용해 동일한 CSS가 적용되도록 함
-                const cssText = Array.from(document.styleSheets)
-                    .filter(sheet => !sheet.href) // 인라인 <style> 태그만 대상
-                    .map(sheet => {
-                        try {
-                            return Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n');
-                        } catch (e) {
-                            return '';
-                        }
-                    })
-                    .join('\n');
-
-                const serializedHTML = clone.outerHTML;
-
-                const svgString =
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
-                    '<foreignObject x="0" y="0" width="' + width + '" height="' + height + '">' +
-                    '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + width + 'px;height:' + height + 'px;overflow:hidden;">' +
-                    '<style>' + cssText + '</style>' +
-                    serializedHTML +
-                    '</div>' +
-                    '</foreignObject>' +
-                    '</svg>';
-
-                resolve('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString));
-            } catch (err) {
-                reject(err);
-            }
         });
-    }
+    });
 
     saveTemplateBtn.addEventListener('click', () => {
         const name = templateNameInput.value.trim();
