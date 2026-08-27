@@ -314,34 +314,82 @@
         font-weight: 600;
     }
 
+    /* 템플릿 카드 스타일 (썸네일 포함) */
     .template-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
         background: var(--card-bg);
-        padding: 8px 12px;
+        padding: 8px 10px;
         border: 1px solid var(--border-color);
         border-radius: var(--radius-sm);
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         font-size: 13px;
-    }
-    .template-item span {
         cursor: pointer;
+        transition: all 0.2s ease;
+        gap: 8px;
+    }
+    .template-item:hover {
+        border-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
+        background: #f0f7ff;
+    }
+    .template-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+    }
+    .template-name {
+        font-weight: 700;
+        color: var(--text-main);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        flex: 1;
-        font-weight: 500;
     }
-    .template-item span:hover { color: var(--primary); font-weight: 700; }
+    .template-ratio {
+        font-size: 11px;
+        color: var(--text-sub);
+        margin-top: 2px;
+    }
+    .template-right-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    .template-thumb {
+        width: 42px;
+        height: 42px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+        background: #e2e8f0;
+        flex-shrink: 0;
+    }
+    .template-thumb-empty {
+        width: 42px;
+        height: 42px;
+        border-radius: 4px;
+        border: 1px dashed var(--border-color);
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        color: var(--text-sub);
+        font-weight: 600;
+        flex-shrink: 0;
+    }
     .template-del {
         background: transparent;
         color: var(--text-sub);
         border: none;
-        padding: 2px 6px;
+        padding: 4px 6px;
         cursor: pointer;
         font-size: 12px;
         border-radius: 4px;
+        transition: all 0.2s;
     }
     .template-del:hover { background: #fee2e2; color: var(--danger); }
 </style>
@@ -365,7 +413,7 @@
                 <label style="color: #1e40af;">📂 템플릿 관리</label>
                 <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:8px 10px; box-sizing:border-box; margin-bottom:8px; border:1px solid #93c5fd; border-radius:var(--radius-sm); font-size:13px; outline:none;">
                 <button class="btn action-btn" id="save-template-btn">현재 상태를 템플릿으로 저장</button>
-                <div style="max-height: 100px; overflow-y: auto; margin-top: 8px;" id="template-list-container"></div>
+                <div style="max-height: 180px; overflow-y: auto; margin-top: 10px;" id="template-list-container"></div>
             </div>
 
             <div class="control-group">
@@ -432,7 +480,6 @@
     let selectedBox = null;
     let currentRatio = '1:1';
 
-    // 1. 현재 작업 상태 실시간 자동 저장
     function saveCurrentState() {
         const textBoxesData = [];
         document.querySelectorAll('.text-box').forEach(box => {
@@ -462,7 +509,6 @@
         localStorage.setItem('active_meme_state', JSON.stringify(currentState));
     }
 
-    // 2. 새로고침 후 마지막 작업 상태 복원
     function loadCurrentState() {
         const saved = localStorage.getItem('active_meme_state');
         if (!saved) return;
@@ -1001,6 +1047,7 @@
         renderTemplateList();
     };
 
+    // 템플릿 썸네일 카드 렌더링 로직
     function renderTemplateList() {
         const templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
         templateListContainer.innerHTML = '';
@@ -1013,18 +1060,49 @@
         templates.forEach(t => {
             const item = document.createElement('div');
             item.className = 'template-item';
-            
-            const titleSpan = document.createElement('span');
-            titleSpan.textContent = t.name;
-            titleSpan.onclick = () => loadTemplate(t.name);
+            item.onclick = () => loadTemplate(t.name);
+
+            // 좌측 정보 (이름, 비율)
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'template-info';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'template-name';
+            nameSpan.textContent = t.name;
+
+            const ratioSpan = document.createElement('span');
+            ratioSpan.className = 'template-ratio';
+            ratioSpan.textContent = `비율: ${t.ratio || '1:1'}`;
+
+            infoDiv.appendChild(nameSpan);
+            infoDiv.appendChild(ratioSpan);
+
+            // 우측 영역 (사진 썸네일 + 삭제 버튼)
+            const rightBox = document.createElement('div');
+            rightBox.className = 'template-right-box';
+
+            if (t.imageSrc && t.imageSrc.trim() !== '') {
+                const img = document.createElement('img');
+                img.src = t.imageSrc;
+                img.className = 'template-thumb';
+                img.alt = t.name;
+                rightBox.appendChild(img);
+            } else {
+                const emptyThumb = document.createElement('div');
+                emptyThumb.className = 'template-thumb-empty';
+                emptyThumb.textContent = 'NO IMG';
+                rightBox.appendChild(emptyThumb);
+            }
 
             const delBtn = document.createElement('button');
             delBtn.className = 'template-del';
             delBtn.textContent = '삭제';
             delBtn.onclick = (e) => deleteTemplate(t.name, e);
 
-            item.appendChild(titleSpan);
-            item.appendChild(delBtn);
+            rightBox.appendChild(delBtn);
+
+            item.appendChild(infoDiv);
+            item.appendChild(rightBox);
             templateListContainer.appendChild(item);
         });
     }
