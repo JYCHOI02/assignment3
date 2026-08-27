@@ -538,8 +538,9 @@
     // =======================================================
     // T03-C11, C12, C13: 내려받기 기능 (html2canvas)
     // =======================================================
+    // T03-C11, C12, C13 완벽 대응: 위치 밀림 방지 내려받기 로직
     downloadBtn.addEventListener('click', function() {
-        // 선택 해제로 조절점/테두리가 이미지 파일에 남지 않도록 보정
+    // 1. 위치 오차를 일으키는 선택 상태 및 핸들 일시 제거
         if (selectedBox) {
             selectedBox.classList.remove('selected');
             selectedBox = null;
@@ -547,10 +548,18 @@
             selectedControls.style.pointerEvents = 'none';
         }
 
-        // html2canvas로 현재 화면 그대로 렌더링
+    // 2. html2canvas 옵션 보정 (위치 밀림 및 렌더링 오차 방지)
         html2canvas(editorContainer, {
-            scale: 2, // 고화질 출력
-            useCORS: true // 외부/로컬 이미지 지원
+            scale: 2,             // 고화질 출력
+            useCORS: true,        // 이미지 CORS 지원
+            logging: false,
+            backgroundColor: null,
+            onclone: (clonedDoc) => {
+            // 복제된 DOM에서 핸들 및 외곽선 요소 완전히 제거하여 위치 오차 방지
+                const clonedContainer = clonedDoc.getElementById('editor-container');
+                const handles = clonedContainer.querySelectorAll('.drag-handle, .resize-handle');
+                handles.forEach(h => h.remove());
+            }
         }).then(canvas => {
             const link = document.createElement('a');
             link.download = `meme_${currentRatio.replace(':', '_')}.png`;
@@ -558,15 +567,6 @@
             link.click();
         });
     });
-
-    // 템플릿 관리 로직
-    saveTemplateBtn.addEventListener('click', () => {
-        const name = templateNameInput.value.trim();
-        if (!name) {
-            alert('템플릿 이름을 입력해 주세요!');
-            return;
-        }
-
         const textBoxesData = [];
         document.querySelectorAll('.text-box').forEach(box => {
             textBoxesData.push({
