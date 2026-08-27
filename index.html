@@ -51,15 +51,16 @@
         gap: 8px;
     }
 
+    /* 3컬럼 대형 레이아웃 */
     .workspace {
         display: flex;
-        gap: 32px;
+        gap: 28px;
         background: var(--card-bg);
         padding: 32px;
         border-radius: var(--radius-lg);
         box-shadow: var(--shadow);
         border: 1px solid var(--border-color);
-        max-width: 900px;
+        max-width: 1180px;
         width: 100%;
         justify-content: center;
         align-items: flex-start;
@@ -69,14 +70,18 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        flex-shrink: 0;
     }
 
     .section-label {
         font-size: 14px;
-        font-weight: 600;
-        color: var(--text-sub);
+        font-weight: 700;
+        color: var(--text-main);
         margin-bottom: 12px;
         align-self: flex-start;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
     #editor-container {
@@ -160,11 +165,22 @@
     .handle-r { top: 50%; right: -6px; transform: translateY(-50%); cursor: e-resize; }
     .handle-se { bottom: -6px; right: -6px; cursor: se-resize; }
 
+    /* 중앙 서식 설정 패널 */
     .controls {
         display: flex;
         flex-direction: column;
         gap: 16px;
-        width: 320px;
+        width: 280px;
+        flex-shrink: 0;
+    }
+
+    /* 우측 템플릿 관리 전용 패널 */
+    .template-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 340px;
+        flex-shrink: 0;
     }
 
     .control-group {
@@ -314,84 +330,96 @@
         font-weight: 600;
     }
 
-    /* 템플릿 카드 스타일 (썸네일 포함) */
-    .template-item {
+    /* 대형 카드형 템플릿 갤러리 디자인 */
+    .template-list-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        max-height: 460px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .template-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .template-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.15);
+    }
+
+    .template-card-img-wrap {
+        width: 100%;
+        height: 140px;
+        background: #e2e8f0;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .template-card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .template-card-no-img {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-sub);
+    }
+
+    .template-card-body {
+        padding: 10px 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: var(--card-bg);
-        padding: 8px 10px;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-sm);
-        margin-bottom: 8px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        gap: 8px;
+        background: white;
     }
-    .template-item:hover {
-        border-color: var(--primary);
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
-        background: #f0f7ff;
-    }
-    .template-info {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        overflow: hidden;
-    }
-    .template-name {
+
+    .template-card-title {
         font-weight: 700;
+        font-size: 13px;
         color: var(--text-main);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        max-width: 180px;
     }
-    .template-ratio {
+
+    .template-card-ratio-tag {
         font-size: 11px;
-        color: var(--text-sub);
-        margin-top: 2px;
-    }
-    .template-right-box {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-shrink: 0;
-    }
-    .template-thumb {
-        width: 42px;
-        height: 42px;
-        object-fit: cover;
-        border-radius: 4px;
-        border: 1px solid var(--border-color);
-        background: #e2e8f0;
-        flex-shrink: 0;
-    }
-    .template-thumb-empty {
-        width: 42px;
-        height: 42px;
-        border-radius: 4px;
-        border: 1px dashed var(--border-color);
+        font-weight: 700;
         background: #f1f5f9;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 9px;
         color: var(--text-sub);
-        font-weight: 600;
-        flex-shrink: 0;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 6px;
     }
-    .template-del {
+
+    .template-card-del {
         background: transparent;
         color: var(--text-sub);
         border: none;
-        padding: 4px 6px;
+        padding: 4px 8px;
         cursor: pointer;
         font-size: 12px;
         border-radius: 4px;
         transition: all 0.2s;
+        font-weight: 600;
     }
-    .template-del:hover { background: #fee2e2; color: var(--danger); }
+    .template-card-del:hover { background: #fee2e2; color: var(--danger); }
 </style>
 </head>
 <body>
@@ -399,22 +427,17 @@
     <h1 class="header-title">🎨 밈 & 카드뉴스 제작 도구</h1>
     
     <div class="workspace">
+        <!-- 1. 좌측 캔버스 미리보기 -->
         <div class="preview-section">
-            <span class="section-label">실시간 미리보기</span>
+            <span class="section-label">🖥️ 실시간 미리보기</span>
             <div id="editor-container">
                 <img id="preview-image" src="" alt="이미지를 업로드하세요">
             </div>
         </div>
 
+        <!-- 2. 중앙 조작 및 서식 패널 -->
         <div class="controls">
             <button class="btn download-btn" id="download-btn">💾 완성 이미지 내려받기 (.PNG)</button>
-
-            <div class="control-group" style="background: #eff6ff; border-color: #bfdbfe;">
-                <label style="color: #1e40af;">📂 템플릿 관리</label>
-                <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:8px 10px; box-sizing:border-box; margin-bottom:8px; border:1px solid #93c5fd; border-radius:var(--radius-sm); font-size:13px; outline:none;">
-                <button class="btn action-btn" id="save-template-btn">현재 상태를 템플릿으로 저장</button>
-                <div style="max-height: 180px; overflow-y: auto; margin-top: 10px;" id="template-list-container"></div>
-            </div>
 
             <div class="control-group">
                 <label>📐 비율 선택</label>
@@ -455,6 +478,18 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- 3. 우측 대형 템플릿 관리 패널 -->
+        <div class="template-section">
+            <div class="control-group" style="background: #eff6ff; border-color: #bfdbfe;">
+                <label style="color: #1e40af;">📂 템플릿 새로 저장</label>
+                <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:8px 10px; box-sizing:border-box; margin-bottom:8px; border:1px solid #93c5fd; border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                <button class="btn action-btn" id="save-template-btn">현재 상태 저장</button>
+            </div>
+
+            <div class="section-label">🖼️ 저장된 템플릿 목록</div>
+            <div id="template-list-container" class="template-list-grid"></div>
         </div>
     </div>
 
@@ -1047,63 +1082,69 @@
         renderTemplateList();
     };
 
-    // 템플릿 썸네일 카드 렌더링 로직
+    // 우측 대형 카드형 템플릿 갤러리 렌더링
     function renderTemplateList() {
         const templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
         templateListContainer.innerHTML = '';
 
         if (templates.length === 0) {
-            templateListContainer.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:10px;">저장된 템플릿이 없습니다.</div>';
+            templateListContainer.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:20px 10px; background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1;">저장된 템플릿이 없습니다.</div>';
             return;
         }
 
         templates.forEach(t => {
-            const item = document.createElement('div');
-            item.className = 'template-item';
-            item.onclick = () => loadTemplate(t.name);
+            const card = document.createElement('div');
+            card.className = 'template-card';
+            card.onclick = () => loadTemplate(t.name);
 
-            // 좌측 정보 (이름, 비율)
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'template-info';
-
-            const nameSpan = document.createElement('span');
-            nameSpan.className = 'template-name';
-            nameSpan.textContent = t.name;
-
-            const ratioSpan = document.createElement('span');
-            ratioSpan.className = 'template-ratio';
-            ratioSpan.textContent = `비율: ${t.ratio || '1:1'}`;
-
-            infoDiv.appendChild(nameSpan);
-            infoDiv.appendChild(ratioSpan);
-
-            // 우측 영역 (사진 썸네일 + 삭제 버튼)
-            const rightBox = document.createElement('div');
-            rightBox.className = 'template-right-box';
+            // 이미지 영역 (큰 썸네일)
+            const imgWrap = document.createElement('div');
+            imgWrap.className = 'template-card-img-wrap';
 
             if (t.imageSrc && t.imageSrc.trim() !== '') {
                 const img = document.createElement('img');
                 img.src = t.imageSrc;
-                img.className = 'template-thumb';
+                img.className = 'template-card-img';
                 img.alt = t.name;
-                rightBox.appendChild(img);
+                imgWrap.appendChild(img);
             } else {
-                const emptyThumb = document.createElement('div');
-                emptyThumb.className = 'template-thumb-empty';
-                emptyThumb.textContent = 'NO IMG';
-                rightBox.appendChild(emptyThumb);
+                const noImg = document.createElement('div');
+                noImg.className = 'template-card-no-img';
+                noImg.textContent = '배경 이미지 없음';
+                imgWrap.appendChild(noImg);
             }
 
+            // 하단 정보 영역 (이름, 비율 태그, 삭제 버튼)
+            const body = document.createElement('div');
+            body.className = 'template-card-body';
+
+            const titleBox = document.createElement('div');
+            titleBox.style.display = 'flex';
+            titleBox.style.alignItems = 'center';
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'template-card-title';
+            nameEl.textContent = t.name;
+
+            const ratioTag = document.createElement('span');
+            ratioTag.className = 'template-card-ratio-tag';
+            ratioTag.textContent = t.ratio || '1:1';
+
+            titleBox.appendChild(nameEl);
+            titleBox.appendChild(ratioTag);
+
             const delBtn = document.createElement('button');
-            delBtn.className = 'template-del';
+            delBtn.className = 'template-card-del';
             delBtn.textContent = '삭제';
             delBtn.onclick = (e) => deleteTemplate(t.name, e);
 
-            rightBox.appendChild(delBtn);
+            body.appendChild(titleBox);
+            body.appendChild(delBtn);
 
-            item.appendChild(infoDiv);
-            item.appendChild(rightBox);
-            templateListContainer.appendChild(item);
+            card.appendChild(imgWrap);
+            card.appendChild(body);
+
+            templateListContainer.appendChild(card);
         });
     }
 
