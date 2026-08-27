@@ -432,6 +432,33 @@
     let selectedBox = null;
     let currentRatio = '1:1';
 
+    // 글상자 내부의 자식 요소(핸들 버튼) 텍스트를 제외하고 순수 텍스트만 추출하는 함수
+    function getBoxText(box) {
+        if (!box) return '';
+        let text = '';
+        box.childNodes.forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                text += node.textContent;
+            } else if (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('drag-handle') && !node.classList.contains('resize-handle')) {
+                text += node.innerText || node.textContent;
+            }
+        });
+        return text.replace(/[\n\r\s]/g, '');
+    }
+
+    // 선택 해제 시 빈 글상자를 자동 정리하는 함수
+    function cleanSelectedBox() {
+        if (!selectedBox) return;
+        if (getBoxText(selectedBox) === '') {
+            removeSelectedBox();
+        } else {
+            selectedBox.classList.remove('selected');
+            selectedBox = null;
+            selectedControls.style.opacity = '0.4';
+            selectedControls.style.pointerEvents = 'none';
+        }
+    }
+
     ratioBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             ratioBtns.forEach(b => b.classList.remove('active'));
@@ -492,6 +519,9 @@
             return;
         }
 
+        // 새 글상자 생성 전 기존 선택된 상자가 비어있다면 삭제
+        cleanSelectedBox();
+
         const rect = editorContainer.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -542,6 +572,10 @@
     }
 
     function selectBox(box) {
+        if (selectedBox && selectedBox !== box) {
+            cleanSelectedBox();
+        }
+
         document.querySelectorAll('.text-box').forEach(b => b.classList.remove('selected'));
         selectedBox = box;
         selectedBox.classList.add('selected');
@@ -578,18 +612,13 @@
         }
     });
 
+    // 영역 바깥 클릭 시 빈 글상자 정리
     document.addEventListener('click', function(e) {
-        if (!editorContainer.contains(e.target) && !document.querySelector('.controls').contains(e.target)) {
-            if (selectedBox) {
-                if (!selectedBox.textContent.trim()) {
-                    removeSelectedBox();
-                } else {
-                    selectedBox.classList.remove('selected');
-                    selectedBox = null;
-                    selectedControls.style.opacity = '0.4';
-                    selectedControls.style.pointerEvents = 'none';
-                }
+        if (selectedBox) {
+            if (selectedBox.contains(e.target) || document.querySelector('.controls').contains(e.target)) {
+                return;
             }
+            cleanSelectedBox();
         }
     });
 
@@ -668,12 +697,12 @@
     }
 
     downloadBtn.addEventListener('click', function() {
-        if (selectedBox) {
-            selectedBox.classList.remove('selected');
-            selectedBox = null;
-            selectedControls.style.opacity = '0.4';
-            selectedControls.style.pointerEvents = 'none';
-        }
+        cleanSelectedBox();
+
+        // 캔버스 내 모든 글상자 중 내용이 비어있는 글상자 완전 정리
+        document.querySelectorAll('.text-box').forEach(box => {
+            if (getBoxText(box) === '') box.remove();
+        });
 
         const width = editorContainer.offsetWidth;
         const height = editorContainer.offsetHeight;
@@ -804,15 +833,18 @@
 
         const textBoxesData = [];
         document.querySelectorAll('.text-box').forEach(box => {
-            textBoxesData.push({
-                text: box.textContent,
-                left: box.style.left,
-                top: box.style.top,
-                width: box.style.width,
-                fontSize: box.style.fontSize,
-                color: box.style.color,
-                textAlign: box.style.textAlign
-            });
+            const boxText = box.textContent.replace('::', '').trim();
+            if (boxText) {
+                textBoxesData.push({
+                    text: boxText,
+                    left: box.style.left,
+                    top: box.style.top,
+                    width: box.style.width,
+                    fontSize: box.style.fontSize,
+                    color: box.style.color,
+                    textAlign: box.style.textAlign
+                });
+            }
         });
 
         const templateData = {
