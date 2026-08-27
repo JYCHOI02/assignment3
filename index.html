@@ -536,7 +536,7 @@
         document.addEventListener('mouseup', function() { isResizing = false; });
     }
 
-    // 1:1, 4:5, 9:16 모든 비율에서 미리보기와 100% 동일한 위치로 내려받는 보정 로직
+    // 픽셀 정밀 오프셋 보정 내려받기 엔진
     downloadBtn.addEventListener('click', function() {
         if (selectedBox) {
             selectedBox.classList.remove('selected');
@@ -545,33 +545,53 @@
             selectedControls.style.pointerEvents = 'none';
         }
 
-        const width = editorContainer.offsetWidth;
-        const height = editorContainer.offsetHeight;
+        const containerRect = editorContainer.getBoundingClientRect();
+        
+        // 오차 없는 렌더링을 위한 임시 캡처 노드 생성
+        const clone = editorContainer.cloneNode(true);
+        clone.style.position = 'fixed';
+        clone.style.left = '0px';
+        clone.style.top = '0px';
+        clone.style.margin = '0';
+        clone.style.transform = 'none';
+        clone.style.zIndex = '-9999';
+        
+        // 핸들 및 외곽선 요소 완전히 제거
+        clone.querySelectorAll('.drag-handle, .resize-handle').forEach(h => h.remove());
 
-        html2canvas(editorContainer, {
+        // 각 글상자의 픽셀 단위 실제 위치를 절대값으로 재계산 고정
+        const originalBoxes = editorContainer.querySelectorAll('.text-box');
+        const clonedBoxes = clone.querySelectorAll('.text-box');
+
+        originalBoxes.forEach((orig, idx) => {
+            const rect = orig.getBoundingClientRect();
+            const relativeLeft = rect.left - containerRect.left;
+            const relativeTop = rect.top - containerRect.top;
+
+            clonedBoxes[idx].style.left = relativeLeft + 'px';
+            clonedBoxes[idx].style.top = relativeTop + 'px';
+            clonedBoxes[idx].style.width = orig.offsetWidth + 'px';
+            clonedBoxes[idx].style.border = 'none';
+            clonedBoxes[idx].style.background = 'transparent';
+        });
+
+        document.body.appendChild(clone);
+
+        html2canvas(clone, {
             scale: 2,
             useCORS: true,
             logging: false,
             backgroundColor: null,
-            width: width,
-            height: height,
-            x: 0,
-            y: 0,
-            scrollX: 0,
-            scrollY: 0,
-            onclone: (clonedDoc) => {
-                const clonedContainer = clonedDoc.getElementById('editor-container');
-                clonedContainer.style.width = width + 'px';
-                clonedContainer.style.height = height + 'px';
-                
-                const handles = clonedContainer.querySelectorAll('.drag-handle, .resize-handle');
-                handles.forEach(h => h.remove());
-            }
+            width: editorContainer.offsetWidth,
+            height: editorContainer.offsetHeight
         }).then(canvas => {
+            document.body.removeChild(clone);
             const link = document.createElement('a');
             link.download = `meme_${currentRatio.replace(':', '_')}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
+        }).catch(() => {
+            if (document.body.contains(clone)) document.body.removeChild(clone);
         });
     });
 
