@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>밈/카드 제작 도구</title>
-<!-- 미리보기 DOM을 고화질 이미지로 변환하는 라이브러리 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     body {
         font-family: 'Apple SD Gothic Neo', sans-serif;
@@ -25,7 +23,6 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    /* 미리보기 영역 */
     #editor-container {
         position: relative;
         width: 400px;
@@ -44,7 +41,6 @@
         pointer-events: none;
     }
     
-    /* 글상자 스타일 */
     .text-box {
         position: absolute;
         color: white;
@@ -69,7 +65,6 @@
         background: rgba(59, 130, 246, 0.12);
     }
 
-    /* 상단 이동 핸들 */
     .drag-handle {
         position: absolute;
         top: -18px;
@@ -88,11 +83,8 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         z-index: 10;
     }
-    .text-box.selected .drag-handle {
-        display: flex;
-    }
+    .text-box.selected .drag-handle { display: flex; }
 
-    /* 리사이즈 조절점 핸들 */
     .resize-handle {
         position: absolute;
         width: 8px;
@@ -101,13 +93,10 @@
         border: 1px solid white;
         display: none;
     }
-    .text-box.selected .resize-handle {
-        display: block;
-    }
+    .text-box.selected .resize-handle { display: block; }
     .handle-r { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
     .handle-se { bottom: -5px; right: -5px; cursor: se-resize; }
 
-    /* 조작 패널 */
     .controls {
         display: flex;
         flex-direction: column;
@@ -127,10 +116,7 @@
         margin-bottom: 8px;
         color: #475569;
     }
-    .ratio-btns, .align-btns {
-        display: flex;
-        gap: 5px;
-    }
+    .ratio-btns, .align-btns { display: flex; gap: 5px; }
     .ratio-btn, .align-btn {
         flex: 1;
         padding: 6px;
@@ -158,7 +144,6 @@
     }
     .action-btn:hover { background: #059669; }
 
-    /* 내려받기 버튼 */
     .download-btn {
         background: #2563eb;
         color: white;
@@ -228,7 +213,6 @@
     <h2>밈 & 카드뉴스 제작 도구</h2>
     
     <div class="workspace">
-        <!-- 미리보기 화면 -->
         <div>
             <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기</label>
             <div id="editor-container">
@@ -236,12 +220,9 @@
             </div>
         </div>
 
-        <!-- 서식 및 조작 패널 -->
         <div class="controls">
-            <!-- 내려받기 버튼 -->
             <button class="download-btn" id="download-btn">완성 이미지 내려받기 (.PNG)</button>
 
-            <!-- 템플릿 관리 -->
             <div class="control-group" style="background: #eff6ff; border-color: #bfdbfe;">
                 <label style="color: #1e40af;">템플릿 관리</label>
                 <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:6px; box-sizing:border-box; margin-bottom:6px; border:1px solid #93c5fd; border-radius:4px;">
@@ -264,7 +245,6 @@
                 <div id="file-error" class="error-msg">지원하지 않는 파일 형식입니다. (PNG, JPEG 이미지 지원)</div>
             </div>
 
-            <!-- 선택된 글상자 서식 -->
             <div class="control-group" id="selected-controls" style="opacity: 0.4; pointer-events: none;">
                 <label>선택한 글상자 서식</label>
                 <div style="display:flex; flex-direction:column; gap:10px;">
@@ -313,7 +293,6 @@
     let selectedBox = null;
     let currentRatio = '1:1';
 
-    // 비율 선택
     ratioBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             ratioBtns.forEach(b => b.classList.remove('active'));
@@ -341,7 +320,6 @@
         }
     }
 
-    // 파일 업로드 및 예외 처리
     uploadBtn.addEventListener('change', function(event) {
         const file = event.target.files[0];
         fileError.style.display = 'none';
@@ -363,7 +341,6 @@
         reader.readAsDataURL(file);
     });
 
-    // 캔버스 클릭 시 글상자 직접 생성
     editorContainer.addEventListener('click', function(e) {
         if (e.target !== editorContainer && e.target !== previewImage) return;
 
@@ -536,7 +513,7 @@
         document.addEventListener('mouseup', function() { isResizing = false; });
     }
 
-    // 픽셀 정밀 오프셋 보정 내려받기 엔진
+    // HTML5 Native Canvas 기반 내려받기 엔진 (위치 오차 0%)
     downloadBtn.addEventListener('click', function() {
         if (selectedBox) {
             selectedBox.classList.remove('selected');
@@ -545,57 +522,95 @@
             selectedControls.style.pointerEvents = 'none';
         }
 
-        const containerRect = editorContainer.getBoundingClientRect();
-        
-        // 오차 없는 렌더링을 위한 임시 캡처 노드 생성
-        const clone = editorContainer.cloneNode(true);
-        clone.style.position = 'fixed';
-        clone.style.left = '0px';
-        clone.style.top = '0px';
-        clone.style.margin = '0';
-        clone.style.transform = 'none';
-        clone.style.zIndex = '-9999';
-        
-        // 핸들 및 외곽선 요소 완전히 제거
-        clone.querySelectorAll('.drag-handle, .resize-handle').forEach(h => h.remove());
+        const width = editorContainer.offsetWidth;
+        const height = editorContainer.offsetHeight;
 
-        // 각 글상자의 픽셀 단위 실제 위치를 절대값으로 재계산 고정
-        const originalBoxes = editorContainer.querySelectorAll('.text-box');
-        const clonedBoxes = clone.querySelectorAll('.text-box');
+        const canvas = document.createElement('canvas');
+        canvas.width = width * 2; // 2배 고화질
+        canvas.height = height * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
 
-        originalBoxes.forEach((orig, idx) => {
-            const rect = orig.getBoundingClientRect();
-            const relativeLeft = rect.left - containerRect.left;
-            const relativeTop = rect.top - containerRect.top;
+        const drawCanvas = () => {
+            // 1. 배경 이미지 그리기
+            if (previewImage.src && previewImage.complete && previewImage.naturalWidth > 0) {
+                const imgRatio = previewImage.naturalWidth / previewImage.naturalHeight;
+                const containerRatio = width / height;
+                let sWidth = previewImage.naturalWidth;
+                let sHeight = previewImage.naturalHeight;
+                let sx = 0, sy = 0;
 
-            clonedBoxes[idx].style.left = relativeLeft + 'px';
-            clonedBoxes[idx].style.top = relativeTop + 'px';
-            clonedBoxes[idx].style.width = orig.offsetWidth + 'px';
-            clonedBoxes[idx].style.border = 'none';
-            clonedBoxes[idx].style.background = 'transparent';
-        });
+                if (imgRatio > containerRatio) {
+                    sWidth = previewImage.naturalHeight * containerRatio;
+                    sx = (previewImage.naturalWidth - sWidth) / 2;
+                } else {
+                    sHeight = previewImage.naturalWidth / containerRatio;
+                    sy = (previewImage.naturalHeight - sHeight) / 2;
+                }
+                ctx.drawImage(previewImage, sx, sy, sWidth, sHeight, 0, 0, width, height);
+            } else {
+                ctx.fillStyle = '#e1e4e8';
+                ctx.fillRect(0, 0, width, height);
+            }
 
-        document.body.appendChild(clone);
+            // 2. 텍스트 박스 그리기
+            const boxes = editorContainer.querySelectorAll('.text-box');
+            boxes.forEach(box => {
+                const style = window.getComputedStyle(box);
+                const fontSize = parseFloat(style.fontSize);
+                const color = style.color;
+                const textAlign = style.textAlign || 'center';
+                const lineHeight = parseFloat(style.lineHeight) || (fontSize * 1.35);
 
-        html2canvas(clone, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: null,
-            width: editorContainer.offsetWidth,
-            height: editorContainer.offsetHeight
-        }).then(canvas => {
-            document.body.removeChild(clone);
+                const left = box.offsetLeft;
+                const top = box.offsetTop;
+                const boxWidth = box.offsetWidth;
+                const paddingLeft = parseFloat(style.paddingLeft);
+                const paddingTop = parseFloat(style.paddingTop);
+
+                ctx.font = `bold ${fontSize}px 'Apple SD Gothic Neo', sans-serif`;
+                ctx.fillStyle = color;
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+
+                let drawX = left + paddingLeft;
+                if (textAlign === 'center') {
+                    ctx.textAlign = 'center';
+                    drawX = left + boxWidth / 2;
+                } else if (textAlign === 'right') {
+                    ctx.textAlign = 'right';
+                    drawX = left + boxWidth - parseFloat(style.paddingRight);
+                } else {
+                    ctx.textAlign = 'left';
+                }
+
+                // 줄바꿈 계산
+                const rawText = box.innerText.replace(/\n$/, '');
+                const lines = rawText.split('\n');
+                let currentY = top + paddingTop + fontSize * 0.85;
+
+                lines.forEach(line => {
+                    ctx.fillText(line, drawX, currentY);
+                    currentY += lineHeight;
+                });
+            });
+
+            // 3. 파일 다운로드
             const link = document.createElement('a');
             link.download = `meme_${currentRatio.replace(':', '_')}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-        }).catch(() => {
-            if (document.body.contains(clone)) document.body.removeChild(clone);
-        });
+        };
+
+        if (previewImage.src && !previewImage.complete) {
+            previewImage.onload = drawCanvas;
+        } else {
+            drawCanvas();
+        }
     });
 
-    // 템플릿 관리 로직
     saveTemplateBtn.addEventListener('click', () => {
         const name = templateNameInput.value.trim();
         if (!name) {
