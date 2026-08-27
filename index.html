@@ -432,6 +432,66 @@
     let selectedBox = null;
     let currentRatio = '1:1';
 
+    // 1. 현재 작업 상태 실시간 자동 저장
+    function saveCurrentState() {
+        const textBoxesData = [];
+        document.querySelectorAll('.text-box').forEach(box => {
+            const clone = box.cloneNode(true);
+            clone.querySelectorAll('.drag-handle, .resize-handle').forEach(h => h.remove());
+            const textContent = clone.innerText.replace(/\n$/, '');
+
+            if (textContent.trim() !== '') {
+                textBoxesData.push({
+                    text: textContent,
+                    left: box.style.left,
+                    top: box.style.top,
+                    width: box.style.width,
+                    fontSize: box.style.fontSize,
+                    color: box.style.color,
+                    textAlign: box.style.textAlign
+                });
+            }
+        });
+
+        const currentState = {
+            ratio: currentRatio,
+            imageSrc: previewImage.src || '',
+            textBoxes: textBoxesData
+        };
+
+        localStorage.setItem('active_meme_state', JSON.stringify(currentState));
+    }
+
+    // 2. 새로고침 후 마지막 작업 상태 복원
+    function loadCurrentState() {
+        const saved = localStorage.getItem('active_meme_state');
+        if (!saved) return;
+
+        try {
+            const state = JSON.parse(saved);
+            if (state.ratio) applyRatio(state.ratio);
+            if (state.imageSrc) previewImage.src = state.imageSrc;
+
+            if (state.textBoxes && Array.isArray(state.textBoxes)) {
+                document.querySelectorAll('.text-box').forEach(b => b.remove());
+                state.textBoxes.forEach(data => {
+                    createTextbox(
+                        parseInt(data.left) || 20,
+                        parseInt(data.top) || 20,
+                        data.text,
+                        parseInt(data.fontSize) || 24,
+                        data.color || '#ffffff',
+                        data.textAlign || 'center',
+                        data.width || '150px'
+                    );
+                });
+                if (selectedBox) cleanSelectedBox();
+            }
+        } catch (e) {
+            console.error('상태 복원 중 오류:', e);
+        }
+    }
+
     function getBoxText(box) {
         if (!box) return '';
         let text = '';
@@ -455,6 +515,7 @@
             selectedControls.style.opacity = '0.4';
             selectedControls.style.pointerEvents = 'none';
         }
+        saveCurrentState();
     }
 
     ratioBtns.forEach(btn => {
@@ -462,6 +523,7 @@
             ratioBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             applyRatio(btn.getAttribute('data-ratio'));
+            saveCurrentState();
         });
     });
 
@@ -501,6 +563,7 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             previewImage.src = e.target.result;
+            saveCurrentState();
         }
         reader.readAsDataURL(file);
     });
@@ -563,10 +626,11 @@
             selectBox(box);
         });
 
+        box.addEventListener('input', saveCurrentState);
+
         editorContainer.appendChild(box);
         selectBox(box);
 
-        // 생성 직후 즉시 입력 포커스 및 기본 텍스트 전체 선택 지정
         setTimeout(() => {
             box.focus();
             const range = document.createRange();
@@ -584,6 +648,7 @@
             }
         }, 0);
 
+        saveCurrentState();
         return box;
     }
 
@@ -617,6 +682,7 @@
             selectedBox = null;
             selectedControls.style.opacity = '0.4';
             selectedControls.style.pointerEvents = 'none';
+            saveCurrentState();
         }
     }
 
@@ -641,11 +707,15 @@
         if (selectedBox) {
             selectedBox.style.fontSize = activeSize.value + 'px';
             sizeIndicator.textContent = activeSize.value + 'px';
+            saveCurrentState();
         }
     });
 
     activeColor.addEventListener('input', () => {
-        if (selectedBox) selectedBox.style.color = activeColor.value;
+        if (selectedBox) {
+            selectedBox.style.color = activeColor.value;
+            saveCurrentState();
+        }
     });
 
     alignBtns.forEach(btn => {
@@ -654,6 +724,7 @@
             alignBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             selectedBox.style.textAlign = btn.getAttribute('data-align');
+            saveCurrentState();
         });
     });
 
@@ -680,7 +751,12 @@
             box.style.top = (initialTop + (e.clientY - startY)) + 'px';
         });
 
-        document.addEventListener('mouseup', function() { isDragging = false; });
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                saveCurrentState();
+            }
+        });
     }
 
     function initResize(box, handleR, handleSE) {
@@ -708,7 +784,12 @@
             }
         });
 
-        document.addEventListener('mouseup', function() { isResizing = false; });
+        document.addEventListener('mouseup', function() {
+            if (isResizing) {
+                isResizing = false;
+                saveCurrentState();
+            }
+        });
     }
 
     downloadBtn.addEventListener('click', function() {
@@ -847,7 +928,10 @@
 
         const textBoxesData = [];
         document.querySelectorAll('.text-box').forEach(box => {
-            const boxText = box.textContent.replace('::', '').trim();
+            const clone = box.cloneNode(true);
+            clone.querySelectorAll('.drag-handle, .resize-handle').forEach(h => h.remove());
+            const boxText = clone.innerText.replace(/\n$/, '').trim();
+
             if (boxText) {
                 textBoxesData.push({
                     text: boxText,
@@ -903,6 +987,8 @@
                 data.width || '150px'
             );
         });
+
+        saveCurrentState();
     };
 
     window.deleteTemplate = function(name, event) {
@@ -944,6 +1030,7 @@
     }
 
     renderTemplateList();
+    loadCurrentState();
 
     function rgbToHex(rgb) {
         if (!rgb || rgb.startsWith('#')) return rgb;
