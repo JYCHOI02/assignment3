@@ -51,7 +51,6 @@
         gap: 8px;
     }
 
-    /* 3컬럼 대형 레이아웃 */
     .workspace {
         display: flex;
         gap: 28px;
@@ -165,7 +164,6 @@
     .handle-r { top: 50%; right: -6px; transform: translateY(-50%); cursor: e-resize; }
     .handle-se { bottom: -6px; right: -6px; cursor: se-resize; }
 
-    /* 중앙 서식 설정 패널 */
     .controls {
         display: flex;
         flex-direction: column;
@@ -174,7 +172,6 @@
         flex-shrink: 0;
     }
 
-    /* 우측 템플릿 관리 전용 패널 */
     .template-section {
         display: flex;
         flex-direction: column;
@@ -330,7 +327,6 @@
         font-weight: 600;
     }
 
-    /* 대형 카드형 템플릿 갤러리 디자인 */
     .template-list-grid {
         display: grid;
         grid-template-columns: 1fr;
@@ -427,7 +423,6 @@
     <h1 class="header-title">🎨 밈 & 카드뉴스 제작 도구</h1>
     
     <div class="workspace">
-        <!-- 1. 좌측 캔버스 미리보기 -->
         <div class="preview-section">
             <span class="section-label">🖥️ 실시간 미리보기</span>
             <div id="editor-container">
@@ -435,7 +430,6 @@
             </div>
         </div>
 
-        <!-- 2. 중앙 조작 및 서식 패널 -->
         <div class="controls">
             <button class="btn download-btn" id="download-btn">💾 완성 이미지 내려받기 (.PNG)</button>
 
@@ -480,7 +474,6 @@
             </div>
         </div>
 
-        <!-- 3. 우측 대형 템플릿 관리 패널 -->
         <div class="template-section">
             <div class="control-group" style="background: #eff6ff; border-color: #bfdbfe;">
                 <label style="color: #1e40af;">📂 템플릿 새로 저장</label>
@@ -515,7 +508,34 @@
     let selectedBox = null;
     let currentRatio = '1:1';
 
-    function saveCurrentState() {
+    // 저장 공간(localStorage) 초과 방지를 위한 이미지 압축 함수
+    function compressImageSrc(srcUrl, maxWidth = 600, quality = 0.6) {
+        return new Promise((resolve) => {
+            if (!srcUrl || !srcUrl.startsWith('data:image')) {
+                resolve(srcUrl);
+                return;
+            }
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let w = img.width;
+                let h = img.height;
+                if (w > maxWidth) {
+                    h = Math.round((h * maxWidth) / w);
+                    w = maxWidth;
+                }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = () => resolve(srcUrl);
+            img.src = srcUrl;
+        });
+    }
+
+    async function saveCurrentState() {
         const textBoxesData = [];
         document.querySelectorAll('.text-box').forEach(box => {
             const clone = box.cloneNode(true);
@@ -535,13 +555,19 @@
             }
         });
 
+        const compressedImg = await compressImageSrc(previewImage.src || '');
+
         const currentState = {
             ratio: currentRatio,
-            imageSrc: previewImage.src || '',
+            imageSrc: compressedImg,
             textBoxes: textBoxesData
         };
 
-        localStorage.setItem('active_meme_state', JSON.stringify(currentState));
+        try {
+            localStorage.setItem('active_meme_state', JSON.stringify(currentState));
+        } catch (e) {
+            console.warn('저장 공간 초과로 자동 저장이 제한되었습니다.');
+        }
     }
 
     function loadCurrentState() {
@@ -1000,7 +1026,8 @@
         return lines;
     }
 
-    saveTemplateBtn.addEventListener('click', () => {
+    // 템플릿 저장 (이미지 압축 + 저장 용량 예외 처리)
+    saveTemplateBtn.addEventListener('click', async () => {
         const name = templateNameInput.value.trim();
         if (!name) {
             alert('템플릿 이름을 입력해 주세요!');
@@ -1026,10 +1053,13 @@
             }
         });
 
+        // 템플릿용 이미지 경량화 (최대 600px)
+        const compressedImg = await compressImageSrc(previewImage.src || '', 600, 0.6);
+
         const templateData = {
             name: name,
             ratio: currentRatio,
-            imageSrc: previewImage.src || '',
+            imageSrc: compressedImg,
             textBoxes: textBoxesData
         };
 
@@ -1038,10 +1068,18 @@
         if (existingIndex >= 0) templates[existingIndex] = templateData;
         else templates.push(templateData);
 
-        localStorage.setItem('meme_templates', JSON.stringify(templates));
-        templateNameInput.value = '';
-        renderTemplateList();
-        alert(`템플릿 "${name}"이(가) 저장되었습니다!`);
+        try {
+            localStorage.setItem('meme_templates', JSON.stringify(templates));
+            templateNameInput.value = '';
+            renderTemplateList();
+            alert(`템플릿 "${name}"이(가) 저장되었습니다!`);
+        } catch (e) {
+            if (e.name === 'QuotaExceededError' || e.code === 22) {
+                alert('저장 공간(5MB)이 가득 차 템플릿을 저장할 수 없습니다.\n기존 템플릿을 일부 삭제 후 다시 시도해 주세요.');
+            } else {
+                alert('템플릿 저장 중 오류가 발생했습니다.');
+            }
+        }
     });
 
     window.loadTemplate = function(name) {
@@ -1082,7 +1120,6 @@
         renderTemplateList();
     };
 
-    // 우측 대형 카드형 템플릿 갤러리 렌더링
     function renderTemplateList() {
         const templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
         templateListContainer.innerHTML = '';
@@ -1097,7 +1134,6 @@
             card.className = 'template-card';
             card.onclick = () => loadTemplate(t.name);
 
-            // 이미지 영역 (큰 썸네일)
             const imgWrap = document.createElement('div');
             imgWrap.className = 'template-card-img-wrap';
 
@@ -1114,7 +1150,6 @@
                 imgWrap.appendChild(noImg);
             }
 
-            // 하단 정보 영역 (이름, 비율 태그, 삭제 버튼)
             const body = document.createElement('div');
             body.className = 'template-card-body';
 
