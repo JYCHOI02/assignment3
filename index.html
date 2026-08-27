@@ -2,45 +2,107 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>밈/카드 제작 도구</title>
+<!-- 미리보기 DOM 변환 라이브러리 (필요시 대비 유지) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
+    :root {
+        --bg-main: #f8fafc;
+        --card-bg: #ffffff;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --accent: #10b981;
+        --accent-hover: #059669;
+        --danger: #ef4444;
+        --danger-hover: #dc2626;
+        --text-main: #0f172a;
+        --text-sub: #64748b;
+        --border-color: #e2e8f0;
+        --radius-lg: 16px;
+        --radius-md: 10px;
+        --radius-sm: 6px;
+        --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
     body {
-        font-family: 'Apple SD Gothic Neo', sans-serif;
-        background-color: #f4f6f8;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, 'Apple SD Gothic Neo', sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 30px;
+        min-height: 100vh;
+        padding: 40px 20px;
     }
-    h2 { color: #333; margin-bottom: 10px; }
+
+    .header-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
     .workspace {
         display: flex;
-        gap: 30px;
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        gap: 32px;
+        background: var(--card-bg);
+        padding: 32px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        max-width: 900px;
+        width: 100%;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    /* 캔버스 미리보기 영역 */
+    .preview-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .section-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-sub);
+        margin-bottom: 12px;
+        align-self: flex-start;
     }
 
     #editor-container {
         position: relative;
         width: 400px;
         height: 400px;
-        background: #e1e4e8;
+        background: #e2e8f0;
         border: 2px dashed #cbd5e1;
+        border-radius: var(--radius-md);
         overflow: hidden;
-        cursor: text;
+        cursor: crosshair;
         user-select: none;
-        box-sizing: border-box;
+        transition: width 0.25s ease, height 0.25s ease;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
     }
+
     #preview-image {
         width: 100%;
         height: 100%;
         object-fit: cover;
         pointer-events: none;
     }
-    
+
+    /* 글상자 스타일 */
     .text-box {
         position: absolute;
         color: white;
@@ -53,138 +115,214 @@
         word-break: break-all;       
         overflow-wrap: break-word;   
         outline: none;
-        min-width: 100px;
-        max-width: 380px;            
+        min-width: 80px;
+        max-width: 100%;            
         height: auto;
         box-sizing: border-box;
         text-align: center;
         line-height: 1.35;
-    }
-    .text-box.selected {
-        border-color: #3b82f6;
-        background: rgba(59, 130, 246, 0.12);
+        border-radius: 4px;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
     }
 
+    .text-box.selected {
+        border-color: var(--primary);
+        background: rgba(59, 130, 246, 0.15);
+    }
+
+    /* 드래그 및 리사이즈 핸들 */
     .drag-handle {
         position: absolute;
-        top: -18px;
+        top: -20px;
         left: 50%;
         transform: translateX(-50%);
-        width: 28px;
-        height: 14px;
-        background-color: #3b82f6;
+        width: 32px;
+        height: 16px;
+        background-color: var(--primary);
         color: white;
-        border-radius: 3px;
+        border-radius: 4px;
         display: none;
         align-items: center;
         justify-content: center;
         font-size: 10px;
         cursor: move;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         z-index: 10;
     }
     .text-box.selected .drag-handle { display: flex; }
 
     .resize-handle {
         position: absolute;
-        width: 8px;
-        height: 8px;
-        background-color: #3b82f6;
-        border: 1px solid white;
+        width: 10px;
+        height: 10px;
+        background-color: white;
+        border: 2px solid var(--primary);
+        border-radius: 50%;
         display: none;
     }
     .text-box.selected .resize-handle { display: block; }
-    .handle-r { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
-    .handle-se { bottom: -5px; right: -5px; cursor: se-resize; }
+    .handle-r { top: 50%; right: -6px; transform: translateY(-50%); cursor: e-resize; }
+    .handle-se { bottom: -6px; right: -6px; cursor: se-resize; }
 
+    /* 조작 패널 영역 */
     .controls {
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        width: 300px;
+        gap: 16px;
+        width: 320px;
     }
+
     .control-group {
-        background: #f8fafc;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
+        background: var(--bg-main);
+        padding: 16px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
     }
+
     .control-group label {
         display: block;
         font-size: 13px;
-        font-weight: bold;
-        margin-bottom: 8px;
-        color: #475569;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--text-main);
     }
-    .ratio-btns, .align-btns { display: flex; gap: 5px; }
+
+    /* 토글 버튼 그룹 */
+    .ratio-btns, .align-btns {
+        display: flex;
+        background: #e2e8f0;
+        padding: 3px;
+        border-radius: var(--radius-sm);
+        gap: 2px;
+    }
+
     .ratio-btn, .align-btn {
         flex: 1;
-        padding: 6px;
-        border: 1px solid #cbd5e1;
-        background: #fff;
-        cursor: pointer;
-        border-radius: 4px;
-        font-size: 12px;
-    }
-    .ratio-btn.active, .align-btn.active {
-        background: #3b82f6;
-        color: white;
-        border-color: #2563eb;
-    }
-    .action-btn {
-        background: #10b981;
-        color: white;
+        padding: 7px 0;
         border: none;
-        padding: 8px 10px;
-        border-radius: 4px;
+        background: transparent;
+        color: var(--text-sub);
         cursor: pointer;
-        width: 100%;
-        font-weight: bold;
-        margin-bottom: 5px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s ease;
     }
-    .action-btn:hover { background: #059669; }
+
+    .ratio-btn.active, .align-btn.active {
+        background: var(--card-bg);
+        color: var(--primary);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* 공통 버튼 디자인 */
+    .btn {
+        border: none;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .btn:active { transform: scale(0.98); }
 
     .download-btn {
-        background: #2563eb;
+        background: var(--primary);
         color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 6px;
-        cursor: pointer;
+        padding: 12px;
         width: 100%;
-        font-size: 14px;
-        font-weight: bold;
+        font-size: 15px;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
     }
-    .download-btn:hover { background: #1d4ed8; }
-    
+    .download-btn:hover { background: var(--primary-hover); }
+
+    .action-btn {
+        background: var(--accent);
+        color: white;
+        padding: 8px 12px;
+        width: 100%;
+        font-size: 13px;
+    }
+    .action-btn:hover { background: var(--accent-hover); }
+
     .delete-btn {
-        background: #ef4444;
-        color: white;
-        border: none;
-        padding: 6px 10px;
-        border-radius: 4px;
-        cursor: pointer;
+        background: #fee2e2;
+        color: var(--danger);
+        padding: 8px;
         width: 100%;
-        font-weight: bold;
+        font-size: 13px;
     }
-    .delete-btn:hover { background: #dc2626; }
+    .delete-btn:hover { background: #fca5a5; }
+
+    /* 파일 인풋 스타일 */
+    input[type="file"] {
+        font-size: 12px;
+        color: var(--text-sub);
+        width: 100%;
+    }
+    input[type="file"]::file-selector-button {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        padding: 6px 12px;
+        border-radius: var(--radius-sm);
+        color: var(--text-main);
+        font-weight: 600;
+        cursor: pointer;
+        margin-right: 10px;
+        transition: background 0.2s;
+    }
+    input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
+
+    /* 텍스트 서식 조작 인풋 */
+    .input-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: var(--text-sub);
+        font-weight: 600;
+    }
+
+    input[type="range"] {
+        accent-color: var(--primary);
+        cursor: pointer;
+    }
+
+    input[type="color"] {
+        -webkit-appearance: none;
+        border: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        background: transparent;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch {
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+    }
 
     .error-msg {
-        color: #ef4444;
+        color: var(--danger);
         font-size: 12px;
-        margin-top: 5px;
+        margin-top: 6px;
         display: none;
-        font-weight: bold;
+        font-weight: 600;
     }
 
+    /* 템플릿 목록 */
     .template-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: white;
-        padding: 6px 10px;
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
+        background: var(--card-bg);
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
         margin-bottom: 6px;
         font-size: 13px;
     }
@@ -194,44 +332,50 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         flex: 1;
+        font-weight: 500;
     }
-    .template-item span:hover { color: #2563eb; font-weight: bold; }
+    .template-item span:hover { color: var(--primary); font-weight: 700; }
     .template-del {
-        background: #ef4444;
-        color: white;
+        background: transparent;
+        color: var(--text-sub);
         border: none;
-        border-radius: 3px;
-        padding: 3px 6px;
+        padding: 2px 6px;
         cursor: pointer;
-        font-size: 11px;
-        margin-left: 5px;
+        font-size: 12px;
+        border-radius: 4px;
     }
+    .template-del:hover { background: #fee2e2; color: var(--danger); }
 </style>
 </head>
 <body>
 
-    <h2>밈 & 카드뉴스 제작 도구</h2>
+    <h1 class="header-title">🎨 밈 & 카드뉴스 제작 도구</h1>
     
     <div class="workspace">
-        <div>
-            <label style="font-weight:bold; margin-bottom:8px; display:block;">실시간 미리보기</label>
+        <!-- 미리보기 화면 영역 -->
+        <div class="preview-section">
+            <span class="section-label">실시간 미리보기</span>
             <div id="editor-container">
                 <img id="preview-image" src="" alt="이미지를 업로드하세요">
             </div>
         </div>
 
+        <!-- 서식 및 조작 패널 -->
         <div class="controls">
-            <button class="download-btn" id="download-btn">완성 이미지 내려받기 (.PNG)</button>
+            <!-- 완성 다운로드 버튼 -->
+            <button class="btn download-btn" id="download-btn">💾 완성 이미지 내려받기 (.PNG)</button>
 
+            <!-- 템플릿 관리 -->
             <div class="control-group" style="background: #eff6ff; border-color: #bfdbfe;">
-                <label style="color: #1e40af;">템플릿 관리</label>
-                <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:6px; box-sizing:border-box; margin-bottom:6px; border:1px solid #93c5fd; border-radius:4px;">
-                <button class="action-btn" id="save-template-btn">현재 상태를 템플릿으로 저장</button>
-                <div style="max-height: 90px; overflow-y: auto; margin-top: 8px;" id="template-list-container"></div>
+                <label style="color: #1e40af;">📂 템플릿 관리</label>
+                <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:8px 10px; box-sizing:border-box; margin-bottom:8px; border:1px solid #93c5fd; border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                <button class="btn action-btn" id="save-template-btn">현재 상태를 템플릿으로 저장</button>
+                <div style="max-height: 100px; overflow-y: auto; margin-top: 8px;" id="template-list-container"></div>
             </div>
 
+            <!-- 비율 선택 -->
             <div class="control-group">
-                <label>비율 선택</label>
+                <label>📐 비율 선택</label>
                 <div class="ratio-btns">
                     <button class="ratio-btn active" data-ratio="1:1">1:1</button>
                     <button class="ratio-btn" data-ratio="4:5">4:5</button>
@@ -239,33 +383,35 @@
                 </div>
             </div>
 
+            <!-- 이미지 업로드 -->
             <div class="control-group">
-                <label>이미지 업로드 (PNG, JPEG)</label>
-                <input type="file" id="upload-btn" accept="image/png, image/jpeg, image/jpg" style="width: 100%;">
+                <label>🖼️ 배경 이미지 업로드</label>
+                <input type="file" id="upload-btn" accept="image/png, image/jpeg, image/jpg">
                 <div id="file-error" class="error-msg">지원하지 않는 파일 형식입니다. (PNG, JPEG 이미지 지원)</div>
             </div>
 
-            <div class="control-group" id="selected-controls" style="opacity: 0.4; pointer-events: none;">
-                <label>선택한 글상자 서식</label>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px;">글자 크기</span>
+            <!-- 선택된 글상자 서식 제어 패널 -->
+            <div class="control-group" id="selected-controls" style="opacity: 0.4; pointer-events: none; transition: opacity 0.2s ease;">
+                <label>✏️ 선택한 글상자 서식</label>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="input-row">
+                        <span>글자 크기</span>
                         <input type="range" id="active-size" min="12" max="72" value="24">
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px;">글자 색상</span>
+                    <div class="input-row">
+                        <span>글자 색상</span>
                         <input type="color" id="active-color" value="#ffffff">
                     </div>
                     <div>
-                        <span style="font-size:13px; display:block; margin-bottom:5px;">글자 정렬</span>
+                        <span style="font-size:13px; font-weight:600; color:var(--text-sub); display:block; margin-bottom:6px;">글자 정렬</span>
                         <div class="align-btns">
                             <button class="align-btn" data-align="left">좌측</button>
                             <button class="align-btn active" data-align="center">중앙</button>
                             <button class="align-btn" data-align="right">우측</button>
                         </div>
                     </div>
-                    <div style="margin-top: 5px;">
-                        <button class="delete-btn" id="delete-box-btn">글상자 삭제 (Delete키)</button>
+                    <div style="margin-top: 4px;">
+                        <button class="btn delete-btn" id="delete-box-btn">글상자 삭제 (Delete키)</button>
                     </div>
                 </div>
             </div>
@@ -341,8 +487,17 @@
         reader.readAsDataURL(file);
     });
 
+    let mouseDownTarget = null;
+    editorContainer.addEventListener('mousedown', function(e) {
+        mouseDownTarget = e.target;
+    }, true);
+
     editorContainer.addEventListener('click', function(e) {
         if (e.target !== editorContainer && e.target !== previewImage) return;
+
+        if (mouseDownTarget && mouseDownTarget.closest && mouseDownTarget.closest('.text-box')) {
+            return;
+        }
 
         const rect = editorContainer.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -513,11 +668,7 @@
         document.addEventListener('mouseup', function() { isResizing = false; });
     }
 
-    // 캔버스 직접 그리기 기반 내려받기 엔진
-    // (기존 SVG/foreignObject 방식은 브라우저별로 이미지 로드가 불안정해 제거)
-    // 대신 실제 위치 오차의 원인이었던 두 가지를 정확히 반영:
-    //  1) word-break: break-all에 의한 자동 줄바꿈을 직접 계산
-    //  2) box-sizing: border-box로 인해 생기는 2px 테두리 여백을 반영
+    // 캔버스 정밀 렌더링 기반 내려받기 엔진
     downloadBtn.addEventListener('click', function() {
         if (selectedBox) {
             selectedBox.classList.remove('selected');
@@ -530,13 +681,12 @@
         const height = editorContainer.offsetHeight;
 
         const canvas = document.createElement('canvas');
-        canvas.width = width * 2; // 2배 고화질
+        canvas.width = width * 2;
         canvas.height = height * 2;
         const ctx = canvas.getContext('2d');
         ctx.scale(2, 2);
 
         const drawCanvas = () => {
-            // 1. 배경 이미지 그리기 (object-fit: cover와 동일하게 크롭)
             if (previewImage.src && previewImage.complete && previewImage.naturalWidth > 0) {
                 const imgRatio = previewImage.naturalWidth / previewImage.naturalHeight;
                 const containerRatio = width / height;
@@ -553,11 +703,10 @@
                 }
                 ctx.drawImage(previewImage, sx, sy, sWidth, sHeight, 0, 0, width, height);
             } else {
-                ctx.fillStyle = '#e1e4e8';
+                ctx.fillStyle = '#e2e8f0';
                 ctx.fillRect(0, 0, width, height);
             }
 
-            // 2. 텍스트 박스 그리기
             const boxes = editorContainer.querySelectorAll('.text-box');
             boxes.forEach(box => {
                 const style = window.getComputedStyle(box);
@@ -566,7 +715,6 @@
                 const textAlign = style.textAlign || 'center';
                 const lineHeight = parseFloat(style.lineHeight) || (fontSize * 1.35);
 
-                // box-sizing: border-box 이므로 테두리/패딩 두께만큼 내용 영역이 안으로 들어감
                 const borderLeft = parseFloat(style.borderLeftWidth) || 0;
                 const borderRight = parseFloat(style.borderRightWidth) || 0;
                 const borderTop = parseFloat(style.borderTopWidth) || 0;
@@ -579,7 +727,7 @@
                 const outerWidth = box.offsetWidth;
                 const contentWidth = Math.max(1, outerWidth - borderLeft - borderRight - paddingLeft - paddingRight);
 
-                ctx.font = `bold ${fontSize}px 'Apple SD Gothic Neo', sans-serif`;
+                ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif`;
                 ctx.fillStyle = color;
                 ctx.textBaseline = 'middle';
                 ctx.shadowColor = 'rgba(0,0,0,0.9)';
@@ -590,7 +738,7 @@
                 let drawX;
                 if (textAlign === 'center') {
                     ctx.textAlign = 'center';
-                    drawX = left + outerWidth / 2; // 좌우 테두리 두께가 같아 중앙값은 그대로
+                    drawX = left + outerWidth / 2;
                 } else if (textAlign === 'right') {
                     ctx.textAlign = 'right';
                     drawX = left + outerWidth - borderRight - paddingRight;
@@ -599,11 +747,9 @@
                     drawX = left + borderLeft + paddingLeft;
                 }
 
-                // 명시적 줄바꿈(엔터) + word-break: break-all과 동일한 글자 단위 자동 줄바꿈 재현
                 const rawText = box.innerText.replace(/\n$/, '');
                 const lines = wrapTextLikeCss(ctx, rawText, contentWidth);
 
-                // 각 줄(line box)의 정중앙에 텍스트를 그려 CSS의 line-height 배치와 최대한 맞춤
                 const contentTop = top + borderTop + paddingTop;
                 lines.forEach((line, i) => {
                     const lineCenterY = contentTop + lineHeight * (i + 0.5);
@@ -611,7 +757,6 @@
                 });
             });
 
-            // 3. 파일 다운로드
             const link = document.createElement('a');
             link.download = `meme_${currentRatio.replace(':', '_')}.png`;
             link.href = canvas.toDataURL('image/png');
@@ -625,8 +770,6 @@
         }
     });
 
-    // .text-box의 word-break: break-all + max-width 줄바꿈을 그대로 재현
-    // (엔터로 만든 줄은 유지하고, 폭을 넘으면 글자 단위로 강제 줄바꿈)
     function wrapTextLikeCss(ctx, text, maxWidth) {
         const paragraphs = text.split('\n');
         const lines = [];
