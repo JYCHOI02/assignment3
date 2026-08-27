@@ -581,6 +581,7 @@
 
                 ctx.font = `bold ${fontSize}px 'Apple SD Gothic Neo', sans-serif`;
                 ctx.fillStyle = color;
+                ctx.textBaseline = 'middle';
                 ctx.shadowColor = 'rgba(0,0,0,0.9)';
                 ctx.shadowBlur = 4;
                 ctx.shadowOffsetX = 2;
@@ -602,10 +603,11 @@
                 const rawText = box.innerText.replace(/\n$/, '');
                 const lines = wrapTextLikeCss(ctx, rawText, contentWidth);
 
-                let currentY = top + borderTop + paddingTop + fontSize * 0.85;
-                lines.forEach(line => {
-                    ctx.fillText(line, drawX, currentY);
-                    currentY += lineHeight;
+                // 각 줄(line box)의 정중앙에 텍스트를 그려 CSS의 line-height 배치와 최대한 맞춤
+                const contentTop = top + borderTop + paddingTop;
+                lines.forEach((line, i) => {
+                    const lineCenterY = contentTop + lineHeight * (i + 0.5);
+                    ctx.fillText(line, drawX, lineCenterY);
                 });
             });
 
