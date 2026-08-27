@@ -432,7 +432,6 @@
     let selectedBox = null;
     let currentRatio = '1:1';
 
-    // 글상자 내부의 자식 요소(핸들 버튼) 텍스트를 제외하고 순수 텍스트만 추출하는 함수
     function getBoxText(box) {
         if (!box) return '';
         let text = '';
@@ -446,7 +445,6 @@
         return text.replace(/[\n\r\s]/g, '');
     }
 
-    // 선택 해제 시 빈 글상자를 자동 정리하는 함수
     function cleanSelectedBox() {
         if (!selectedBox) return;
         if (getBoxText(selectedBox) === '') {
@@ -519,7 +517,6 @@
             return;
         }
 
-        // 새 글상자 생성 전 기존 선택된 상자가 비어있다면 삭제
         cleanSelectedBox();
 
         const rect = editorContainer.getBoundingClientRect();
@@ -568,6 +565,25 @@
 
         editorContainer.appendChild(box);
         selectBox(box);
+
+        // 생성 직후 즉시 입력 포커스 및 기본 텍스트 전체 선택 지정
+        setTimeout(() => {
+            box.focus();
+            const range = document.createRange();
+            const sel = window.getSelection();
+            let textNode = null;
+            box.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.length > 0) {
+                    textNode = node;
+                }
+            });
+            if (textNode) {
+                range.selectNodeContents(textNode);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }, 0);
+
         return box;
     }
 
@@ -612,7 +628,6 @@
         }
     });
 
-    // 영역 바깥 클릭 시 빈 글상자 정리
     document.addEventListener('click', function(e) {
         if (selectedBox) {
             if (selectedBox.contains(e.target) || document.querySelector('.controls').contains(e.target)) {
@@ -699,7 +714,6 @@
     downloadBtn.addEventListener('click', function() {
         cleanSelectedBox();
 
-        // 캔버스 내 모든 글상자 중 내용이 비어있는 글상자 완전 정리
         document.querySelectorAll('.text-box').forEach(box => {
             if (getBoxText(box) === '') box.remove();
         });
