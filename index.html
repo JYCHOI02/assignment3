@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>밈/카드 제작 도구</title>
+<title>짤·카드 스튜디오</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     :root {
@@ -160,7 +160,7 @@
 </head>
 <body>
 
-    <h1 class="header-title">🎨 밈 & 카드뉴스 제작 도구</h1>
+    <h1 class="header-title">🎨 짤·카드 스튜디오</h1>
     
     <div class="workspace">
         <div class="preview-section">
@@ -540,7 +540,6 @@
                 lines.forEach((line, i) => { ctx.fillText(line, drawX, contentTop + lineHeight * (i + 0.5) + yOffset); });
             });
 
-            // Canvas 기반 변환은 이미지 EXIF(위치 메타데이터)를 완전 자동 제거함 (C28 충족)
             const link = document.createElement('a'); link.download = `meme_${currentRatio.replace(':', '_')}.png`;
             link.href = canvas.toDataURL('image/png'); link.click();
         };
@@ -589,7 +588,6 @@
         } catch (e) { alert('저장 공간이 부족합니다.'); }
     });
 
-    // C22 ~ C24 JSON 검증 로직 구현부
     importJsonBtn.addEventListener('click', () => jsonFileInput.click());
     jsonFileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -598,7 +596,6 @@
         const reader = new FileReader();
         reader.onload = function(event) {
             let data;
-            // C23: 문법 손상 검증 (SyntaxError 체크)
             try {
                 data = JSON.parse(event.target.result);
             } catch (err) {
@@ -607,7 +604,6 @@
                 return;
             }
 
-            // C24: 필수 키 스키마 검증 (name, ratio, textBoxes 체크)
             if (
                 !data ||
                 typeof data !== 'object' ||
@@ -620,7 +616,6 @@
                 return;
             }
 
-            // C22: 정상 JSON 복원 처리
             let templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
             const existingIndex = templates.findIndex(t => t.name === data.name);
             if (existingIndex >= 0) templates[existingIndex] = data;
