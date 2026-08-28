@@ -24,11 +24,7 @@
         --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
     }
 
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, 'Apple SD Gothic Neo', sans-serif;
@@ -65,23 +61,8 @@
         align-items: flex-start;
     }
 
-    .preview-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex-shrink: 0;
-    }
-
-    .section-label {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--text-main);
-        margin-bottom: 12px;
-        align-self: flex-start;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
+    .preview-section { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .section-label { font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; align-self: flex-start; display: flex; align-items: center; gap: 6px; }
 
     #editor-container {
         position: relative;
@@ -97,373 +78,84 @@
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
-    #preview-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        pointer-events: none;
-        display: none;
-    }
+    #preview-image { width: 100%; height: 100%; object-fit: cover; pointer-events: none; display: none; }
 
-    /* 이미지 미업로드 시 플레이스홀더 디자인 */
     .empty-placeholder {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 24px;
-        pointer-events: none;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 24px; pointer-events: none;
         background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-        box-sizing: border-box;
     }
 
-    .placeholder-icon {
-        font-size: 42px;
-        margin-bottom: 12px;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
-    }
-
-    .placeholder-title {
-        font-size: 15px;
-        font-weight: 700;
-        color: #475569;
-        margin-bottom: 6px;
-    }
-
-    .placeholder-sub {
-        font-size: 12px;
-        color: #94a3b8;
-        line-height: 1.5;
-    }
+    .placeholder-icon { font-size: 42px; margin-bottom: 12px; }
+    .placeholder-title { font-size: 15px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    .placeholder-sub { font-size: 12px; color: #94a3b8; line-height: 1.5; }
 
     .text-box {
-        position: absolute;
-        color: white;
-        font-size: 24px;
-        font-weight: bold;
+        position: absolute; color: white; font-size: 24px; font-weight: bold;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9);
-        padding: 8px 12px;
-        border: 2px dashed transparent;
-        white-space: pre-wrap;       
-        word-break: break-all;       
-        overflow-wrap: break-word;   
-        outline: none;
-        min-width: 80px;
-        max-width: 100%;            
-        height: auto;
-        box-sizing: border-box;
-        text-align: center;
-        line-height: 1.35;
-        border-radius: 4px;
+        padding: 8px 12px; border: 2px dashed transparent; white-space: pre-wrap; word-break: break-all;
+        overflow-wrap: break-word; outline: none; min-width: 80px; max-width: 100%; height: auto;
+        box-sizing: border-box; text-align: center; line-height: 1.35; border-radius: 4px;
         transition: border-color 0.15s ease, background-color 0.15s ease;
     }
-
-    .text-box.selected {
-        border-color: var(--primary);
-        background: rgba(59, 130, 246, 0.15);
-    }
+    .text-box.selected { border-color: var(--primary); background: rgba(59, 130, 246, 0.15); }
 
     .drag-handle {
-        position: absolute;
-        top: -20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 32px;
-        height: 16px;
-        background-color: var(--primary);
-        color: white;
-        border-radius: 4px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        cursor: move;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        z-index: 10;
+        position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 32px; height: 16px;
+        background-color: var(--primary); color: white; border-radius: 4px; display: none;
+        align-items: center; justify-content: center; font-size: 10px; cursor: move; z-index: 10;
     }
     .text-box.selected .drag-handle { display: flex; }
 
-    .resize-handle {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background-color: white;
-        border: 2px solid var(--primary);
-        border-radius: 50%;
-        display: none;
-    }
+    .resize-handle { position: absolute; width: 10px; height: 10px; background-color: white; border: 2px solid var(--primary); border-radius: 50%; display: none; }
     .text-box.selected .resize-handle { display: block; }
     .handle-r { top: 50%; right: -6px; transform: translateY(-50%); cursor: e-resize; }
     .handle-se { bottom: -6px; right: -6px; cursor: se-resize; }
 
-    .controls {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        width: 280px;
-        flex-shrink: 0;
-    }
+    .controls { display: flex; flex-direction: column; gap: 16px; width: 280px; flex-shrink: 0; }
+    .template-section { display: flex; flex-direction: column; gap: 16px; width: 340px; flex-shrink: 0; }
 
-    .template-section {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        width: 340px;
-        flex-shrink: 0;
-    }
+    .control-group { background: var(--bg-main); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+    .control-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
 
-    .control-group {
-        background: var(--bg-main);
-        padding: 16px;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-color);
-    }
+    .ratio-btns, .align-btns { display: flex; background: #e2e8f0; padding: 3px; border-radius: var(--radius-sm); gap: 2px; }
+    .ratio-btn, .align-btn { flex: 1; padding: 7px 0; border: none; background: transparent; color: var(--text-sub); cursor: pointer; border-radius: 4px; font-size: 13px; font-weight: 600; }
+    .ratio-btn.active, .align-btn.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-    .control-group label {
-        display: block;
-        font-size: 13px;
-        font-weight: 700;
-        margin-bottom: 10px;
-        color: var(--text-main);
-    }
-
-    .ratio-btns, .align-btns {
-        display: flex;
-        background: #e2e8f0;
-        padding: 3px;
-        border-radius: var(--radius-sm);
-        gap: 2px;
-    }
-
-    .ratio-btn, .align-btn {
-        flex: 1;
-        padding: 7px 0;
-        border: none;
-        background: transparent;
-        color: var(--text-sub);
-        cursor: pointer;
-        border-radius: 4px;
-        font-size: 13px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-
-    .ratio-btn.active, .align-btn.active {
-        background: var(--card-bg);
-        color: var(--primary);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .btn {
-        border: none;
-        border-radius: var(--radius-sm);
-        font-weight: 700;
-        cursor: pointer;
-        transition: background-color 0.2s ease, transform 0.1s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-    }
+    .btn { border: none; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .btn:active { transform: scale(0.98); }
 
-    .download-btn {
-        background: var(--primary);
-        color: white;
-        padding: 12px;
-        width: 100%;
-        font-size: 15px;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-    }
-    .download-btn:hover { background: var(--primary-hover); }
+    .download-btn { background: var(--primary); color: white; padding: 12px; width: 100%; font-size: 15px; }
+    .reset-btn { background: #f1f5f9; color: var(--text-sub); border: 1px solid var(--border-color); padding: 8px; width: 100%; font-size: 13px; }
+    .action-btn { background: var(--accent); color: white; padding: 8px 12px; width: 100%; font-size: 13px; }
+    .delete-btn { background: #fee2e2; color: var(--danger); padding: 8px; width: 100%; font-size: 13px; }
 
-    .reset-btn {
-        background: #f1f5f9;
-        color: var(--text-sub);
-        border: 1px solid var(--border-color);
-        padding: 8px;
-        width: 100%;
-        font-size: 13px;
-    }
-    .reset-btn:hover { background: #e2e8f0; color: var(--text-main); }
+    input[type="file"] { font-size: 12px; color: var(--text-sub); width: 100%; }
+    input[type="file"]::file-selector-button { background: var(--card-bg); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: var(--radius-sm); color: var(--text-main); font-weight: 600; cursor: pointer; margin-right: 10px; }
 
-    .action-btn {
-        background: var(--accent);
-        color: white;
-        padding: 8px 12px;
-        width: 100%;
-        font-size: 13px;
-    }
-    .action-btn:hover { background: var(--accent-hover); }
+    .input-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text-sub); font-weight: 600; }
+    .size-indicator { font-weight: 700; color: var(--primary); background: #dbeafe; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
-    .delete-btn {
-        background: #fee2e2;
-        color: var(--danger);
-        padding: 8px;
-        width: 100%;
-        font-size: 13px;
-    }
-    .delete-btn:hover { background: #fca5a5; }
+    input[type="range"] { accent-color: var(--primary); cursor: pointer; }
+    input[type="color"] { -webkit-appearance: none; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; background: transparent; }
+    input[type="color"]::-webkit-color-swatch { border: 2px solid var(--border-color); border-radius: 50%; }
 
-    input[type="file"] {
-        font-size: 12px;
-        color: var(--text-sub);
-        width: 100%;
-    }
-    input[type="file"]::file-selector-button {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        padding: 6px 12px;
-        border-radius: var(--radius-sm);
-        color: var(--text-main);
-        font-weight: 600;
-        cursor: pointer;
-        margin-right: 10px;
-        transition: background 0.2s;
-    }
-    input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
+    .error-msg { color: var(--danger); font-size: 12px; margin-top: 6px; display: none; font-weight: 600; }
 
-    .input-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 13px;
-        color: var(--text-sub);
-        font-weight: 600;
-    }
-
-    .size-indicator {
-        font-weight: 700;
-        color: var(--primary);
-        background: #dbeafe;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-    }
-
-    input[type="range"] {
-        accent-color: var(--primary);
-        cursor: pointer;
-    }
-
-    input[type="color"] {
-        -webkit-appearance: none;
-        border: none;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        cursor: pointer;
-        background: transparent;
-    }
-    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    input[type="color"]::-webkit-color-swatch {
-        border: 2px solid var(--border-color);
-        border-radius: 50%;
-    }
-
-    .error-msg {
-        color: var(--danger);
-        font-size: 12px;
-        margin-top: 6px;
-        display: none;
-        font-weight: 600;
-    }
-
-    .template-list-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
-        max-height: 460px;
-        overflow-y: auto;
-        padding-right: 4px;
-    }
-
-    .template-card {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-    .template-card:hover {
-        border-color: var(--primary);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.15);
-    }
-
-    .template-card-img-wrap {
-        width: 100%;
-        height: 140px;
-        background: #e2e8f0;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .template-card-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .template-card-no-img {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-sub);
-    }
-
-    .template-card-body {
-        padding: 10px 12px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: white;
-    }
-
-    .template-card-title {
-        font-weight: 700;
-        font-size: 13px;
-        color: var(--text-main);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 180px;
-    }
-
-    .template-card-ratio-tag {
-        font-size: 11px;
-        font-weight: 700;
-        background: #f1f5f9;
-        color: var(--text-sub);
-        padding: 2px 6px;
-        border-radius: 4px;
-        margin-left: 6px;
-    }
-
-    .template-card-del {
-        background: transparent;
-        color: var(--text-sub);
-        border: none;
-        padding: 4px 8px;
-        cursor: pointer;
-        font-size: 12px;
-        border-radius: 4px;
-        transition: all 0.2s;
-        font-weight: 600;
-    }
-    .template-card-del:hover { background: #fee2e2; color: var(--danger); }
+    .template-list-grid { display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 4px; }
+    .template-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; }
+    .template-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .template-card-img-wrap { width: 100%; height: 120px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .template-card-img { width: 100%; height: 100%; object-fit: cover; }
+    .template-card-body { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; background: white; }
+    .template-card-title { font-weight: 700; font-size: 13px; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+    .template-card-ratio-tag { font-size: 11px; font-weight: 700; background: #f1f5f9; color: var(--text-sub); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+    
+    .card-actions { display: flex; gap: 4px; }
+    .template-card-btn { background: transparent; color: var(--text-sub); border: none; padding: 4px 6px; cursor: pointer; font-size: 12px; border-radius: 4px; font-weight: 600; }
+    .template-card-btn:hover { background: #e2e8f0; color: var(--text-main); }
+    .template-card-btn.del:hover { background: #fee2e2; color: var(--danger); }
 </style>
 </head>
 <body>
@@ -502,7 +194,7 @@
                 <div id="file-error" class="error-msg">지원하지 않는 파일 형식입니다. (PNG, JPEG 이미지 지원)</div>
             </div>
 
-            <div class="control-group" id="selected-controls" style="opacity: 0.4; pointer-events: none; transition: opacity 0.2s ease;">
+            <div class="control-group" id="selected-controls" style="opacity: 0.4; pointer-events: none;">
                 <label>✏️ 선택한 글상자 서식</label>
                 <div style="display:flex; flex-direction:column; gap:12px;">
                     <div class="input-row">
@@ -530,9 +222,13 @@
 
         <div class="template-section">
             <div class="control-group" style="background: #eff6ff; border-color: #bfdbfe;">
-                <label style="color: #1e40af;">📂 템플릿 새로 저장</label>
-                <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:8px 10px; box-sizing:border-box; margin-bottom:8px; border:1px solid #93c5fd; border-radius:var(--radius-sm); font-size:13px; outline:none;">
-                <button class="btn action-btn" id="save-template-btn">현재 상태 저장</button>
+                <label style="color: #1e40af;">📂 템플릿 저장 및 JSON 관리</label>
+                <input type="text" id="template-name-input" placeholder="템플릿 이름 입력" style="width:100%; padding:8px 10px; margin-bottom:8px; border:1px solid #93c5fd; border-radius:var(--radius-sm); font-size:13px; outline:none;">
+                <button class="btn action-btn" id="save-template-btn" style="margin-bottom:8px;">현재 상태 저장</button>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn action-btn" id="import-json-btn" style="background:#3b82f6;">📥 JSON 불러오기</button>
+                    <input type="file" id="json-file-input" accept=".json" style="display:none;">
+                </div>
             </div>
 
             <div class="section-label">🖼️ 저장된 템플릿 목록</div>
@@ -560,11 +256,12 @@
     const templateNameInput = document.getElementById('template-name-input');
     const saveTemplateBtn = document.getElementById('save-template-btn');
     const templateListContainer = document.getElementById('template-list-container');
+    const importJsonBtn = document.getElementById('import-json-btn');
+    const jsonFileInput = document.getElementById('json-file-input');
 
     let selectedBox = null;
     let currentRatio = '1:1';
 
-    // 배경 이미지 유무에 따른 플레이스홀더 표시/숨김
     function updatePlaceholderVisibility() {
         const src = previewImage.getAttribute('src');
         if (src && src.trim() !== '' && src !== window.location.href) {
@@ -578,21 +275,13 @@
 
     function compressImageSrc(srcUrl, maxWidth = 600, quality = 0.6) {
         return new Promise((resolve) => {
-            if (!srcUrl || !srcUrl.startsWith('data:image')) {
-                resolve(srcUrl);
-                return;
-            }
+            if (!srcUrl || !srcUrl.startsWith('data:image')) { resolve(srcUrl); return; }
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                let w = img.width;
-                let h = img.height;
-                if (w > maxWidth) {
-                    h = Math.round((h * maxWidth) / w);
-                    w = maxWidth;
-                }
-                canvas.width = w;
-                canvas.height = h;
+                let w = img.width, h = img.height;
+                if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                canvas.width = w; canvas.height = h;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, w, h);
                 resolve(canvas.toDataURL('image/jpeg', quality));
@@ -608,78 +297,45 @@
             const clone = box.cloneNode(true);
             clone.querySelectorAll('.drag-handle, .resize-handle').forEach(h => h.remove());
             const textContent = clone.innerText.replace(/\n$/, '');
-
             if (textContent.trim() !== '') {
                 textBoxesData.push({
-                    text: textContent,
-                    left: box.style.left,
-                    top: box.style.top,
-                    width: box.style.width,
-                    fontSize: box.style.fontSize,
-                    color: box.style.color,
-                    textAlign: box.style.textAlign
+                    text: textContent, left: box.style.left, top: box.style.top,
+                    width: box.style.width, fontSize: box.style.fontSize,
+                    color: box.style.color, textAlign: box.style.textAlign
                 });
             }
         });
 
         const compressedImg = await compressImageSrc(previewImage.src || '');
-
-        const currentState = {
-            ratio: currentRatio,
-            imageSrc: compressedImg,
-            textBoxes: textBoxesData
-        };
-
-        try {
-            localStorage.setItem('active_meme_state', JSON.stringify(currentState));
-        } catch (e) {
-            console.warn('저장 공간 초과로 자동 저장이 제한되었습니다.');
-        }
+        const currentState = { ratio: currentRatio, imageSrc: compressedImg, textBoxes: textBoxesData };
+        try { localStorage.setItem('active_meme_state', JSON.stringify(currentState)); } catch (e) {}
     }
 
     function loadCurrentState() {
         const saved = localStorage.getItem('active_meme_state');
-        if (!saved) {
-            updatePlaceholderVisibility();
-            return;
-        }
-
+        if (!saved) { updatePlaceholderVisibility(); return; }
         try {
             const state = JSON.parse(saved);
             if (state.ratio) applyRatio(state.ratio);
-            if (state.imageSrc) {
-                previewImage.src = state.imageSrc;
-            }
+            if (state.imageSrc) previewImage.src = state.imageSrc;
             updatePlaceholderVisibility();
 
             if (state.textBoxes && Array.isArray(state.textBoxes)) {
                 document.querySelectorAll('.text-box').forEach(b => b.remove());
                 state.textBoxes.forEach(data => {
-                    createTextbox(
-                        parseInt(data.left) || 20,
-                        parseInt(data.top) || 20,
-                        data.text,
-                        parseInt(data.fontSize) || 24,
-                        data.color || '#ffffff',
-                        data.textAlign || 'center',
-                        data.width || '150px'
-                    );
+                    createTextbox(parseInt(data.left)||20, parseInt(data.top)||20, data.text, parseInt(data.fontSize)||24, data.color||'#ffffff', data.textAlign||'center', data.width||'150px');
                 });
                 if (selectedBox) cleanSelectedBox();
             }
-        } catch (e) {
-            console.error('상태 복원 중 오류:', e);
-            updatePlaceholderVisibility();
-        }
+        } catch (e) { updatePlaceholderVisibility(); }
     }
 
     function getBoxText(box) {
         if (!box) return '';
         let text = '';
         box.childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                text += node.textContent;
-            } else if (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('drag-handle') && !node.classList.contains('resize-handle')) {
+            if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
+            else if (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('drag-handle') && !node.classList.contains('resize-handle')) {
                 text += node.innerText || node.textContent;
             }
         });
@@ -688,9 +344,8 @@
 
     function cleanSelectedBox() {
         if (!selectedBox) return;
-        if (getBoxText(selectedBox) === '') {
-            removeSelectedBox();
-        } else {
+        if (getBoxText(selectedBox) === '') removeSelectedBox();
+        else {
             selectedBox.classList.remove('selected');
             selectedBox = null;
             selectedControls.style.opacity = '0.4';
@@ -701,21 +356,13 @@
 
     resetCanvasBtn.addEventListener('click', function() {
         if (!confirm('현재 작업 중인 글상자와 배경 이미지를 모두 초기화하시겠습니까?')) return;
-
         document.querySelectorAll('.text-box').forEach(b => b.remove());
         selectedBox = null;
         selectedControls.style.opacity = '0.4';
         selectedControls.style.pointerEvents = 'none';
-
-        previewImage.removeAttribute('src');
-        previewImage.src = '';
-        updatePlaceholderVisibility();
-
-        uploadBtn.value = '';
-        fileError.style.display = 'none';
-
-        applyRatio('1:1');
-        localStorage.removeItem('active_meme_state');
+        previewImage.removeAttribute('src'); previewImage.src = '';
+        updatePlaceholderVisibility(); uploadBtn.value = ''; fileError.style.display = 'none';
+        applyRatio('1:1'); localStorage.removeItem('active_meme_state');
     });
 
     ratioBtns.forEach(btn => {
@@ -733,143 +380,73 @@
             if (b.getAttribute('data-ratio') === ratio) b.classList.add('active');
             else b.classList.remove('active');
         });
-
-        if (ratio === '1:1') {
-            editorContainer.style.width = '400px';
-            editorContainer.style.height = '400px';
-        } else if (ratio === '4:5') {
-            editorContainer.style.width = '360px';
-            editorContainer.style.height = '450px';
-        } else if (ratio === '9:16') {
-            editorContainer.style.width = '280px';
-            editorContainer.style.height = '497px';
-        }
+        if (ratio === '1:1') { editorContainer.style.width = '400px'; editorContainer.style.height = '400px'; }
+        else if (ratio === '4:5') { editorContainer.style.width = '360px'; editorContainer.style.height = '450px'; }
+        else if (ratio === '9:16') { editorContainer.style.width = '280px'; editorContainer.style.height = '497px'; }
     }
 
     uploadBtn.addEventListener('change', function(event) {
         const file = event.target.files[0];
         fileError.style.display = 'none';
-
         if (!file) return;
-
         const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
         if (!validTypes.includes(file.type)) {
             fileError.style.display = 'block';
             fileError.textContent = `지원하지 않는 파일 형식입니다 (${file.name}). PNG, JPEG 이미지만 업로드 가능합니다.`;
-            uploadBtn.value = ''; 
-            return;
+            uploadBtn.value = ''; return;
         }
-
         const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImage.src = e.target.result;
-            updatePlaceholderVisibility();
-            saveCurrentState();
-        }
+        reader.onload = function(e) { previewImage.src = e.target.result; updatePlaceholderVisibility(); saveCurrentState(); }
         reader.readAsDataURL(file);
     });
 
     let mouseDownTarget = null;
-    editorContainer.addEventListener('mousedown', function(e) {
-        mouseDownTarget = e.target;
-    }, true);
-
+    editorContainer.addEventListener('mousedown', function(e) { mouseDownTarget = e.target; }, true);
     editorContainer.addEventListener('click', function(e) {
         if (e.target !== editorContainer && e.target !== previewImage && e.target !== emptyPlaceholder) return;
-
-        if (mouseDownTarget && mouseDownTarget.closest && mouseDownTarget.closest('.text-box')) {
-            return;
-        }
-
+        if (mouseDownTarget && mouseDownTarget.closest && mouseDownTarget.closest('.text-box')) return;
         cleanSelectedBox();
-
         const rect = editorContainer.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        createTextbox(x, y, "문구를 입력하세요", 24, "#ffffff", "center", "150px");
+        createTextbox(e.clientX - rect.left, e.clientY - rect.top, "문구를 입력하세요", 24, "#ffffff", "center", "150px");
     });
 
     function createTextbox(x, y, textContent, fontSize, fontColor, textAlign, boxWidth) {
         const box = document.createElement('div');
-        box.className = 'text-box';
-        box.contentEditable = "true";
-        box.textContent = textContent;
-        box.style.left = x + 'px';
-        box.style.top = y + 'px';
-        box.style.fontSize = fontSize + 'px';
-        box.style.color = fontColor;
-        box.style.textAlign = textAlign;
+        box.className = 'text-box'; box.contentEditable = "true"; box.textContent = textContent;
+        box.style.left = x + 'px'; box.style.top = y + 'px'; box.style.fontSize = fontSize + 'px';
+        box.style.color = fontColor; box.style.textAlign = textAlign;
         if (boxWidth) box.style.width = boxWidth;
 
-        const dragHandle = document.createElement('div');
-        dragHandle.className = 'drag-handle';
-        dragHandle.innerHTML = '::';
-        dragHandle.contentEditable = "false";
+        const dragHandle = document.createElement('div'); dragHandle.className = 'drag-handle'; dragHandle.innerHTML = '::'; dragHandle.contentEditable = "false";
+        const handleR = document.createElement('div'); handleR.className = 'resize-handle handle-r'; handleR.contentEditable = "false";
+        const handleSE = document.createElement('div'); handleSE.className = 'resize-handle handle-se'; handleSE.contentEditable = "false";
 
-        const handleR = document.createElement('div');
-        handleR.className = 'resize-handle handle-r';
-        handleR.contentEditable = "false";
-        const handleSE = document.createElement('div');
-        handleSE.className = 'resize-handle handle-se';
-        handleSE.contentEditable = "false";
-
-        box.appendChild(dragHandle);
-        box.appendChild(handleR);
-        box.appendChild(handleSE);
-
-        initStableDrag(box, dragHandle);
-        initResize(box, handleR, handleSE);
+        box.appendChild(dragHandle); box.appendChild(handleR); box.appendChild(handleSE);
+        initStableDrag(box, dragHandle); initResize(box, handleR, handleSE);
 
         box.addEventListener('focus', function() { selectBox(box); });
-        box.addEventListener('click', function(e) {
-            e.stopPropagation();
-            selectBox(box);
-        });
-
+        box.addEventListener('click', function(e) { e.stopPropagation(); selectBox(box); });
         box.addEventListener('input', saveCurrentState);
 
-        editorContainer.appendChild(box);
-        selectBox(box);
-
+        editorContainer.appendChild(box); selectBox(box);
         setTimeout(() => {
             box.focus();
-            const range = document.createRange();
-            const sel = window.getSelection();
-            let textNode = null;
-            box.childNodes.forEach(node => {
-                if (node.nodeType === Node.TEXT_NODE && node.textContent.length > 0) {
-                    textNode = node;
-                }
-            });
-            if (textNode) {
-                range.selectNodeContents(textNode);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
+            const range = document.createRange(); const sel = window.getSelection(); let textNode = null;
+            box.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE && node.textContent.length > 0) textNode = node; });
+            if (textNode) { range.selectNodeContents(textNode); sel.removeAllRanges(); sel.addRange(range); }
         }, 0);
-
         saveCurrentState();
         return box;
     }
 
     function selectBox(box) {
-        if (selectedBox && selectedBox !== box) {
-            cleanSelectedBox();
-        }
-
+        if (selectedBox && selectedBox !== box) cleanSelectedBox();
         document.querySelectorAll('.text-box').forEach(b => b.classList.remove('selected'));
-        selectedBox = box;
-        selectedBox.classList.add('selected');
-
-        selectedControls.style.opacity = '1';
-        selectedControls.style.pointerEvents = 'auto';
-
+        selectedBox = box; selectedBox.classList.add('selected');
+        selectedControls.style.opacity = '1'; selectedControls.style.pointerEvents = 'auto';
         const computedSize = parseInt(window.getComputedStyle(selectedBox).fontSize);
-        activeSize.value = computedSize;
-        sizeIndicator.textContent = computedSize + 'px';
+        activeSize.value = computedSize; sizeIndicator.textContent = computedSize + 'px';
         activeColor.value = rgbToHex(window.getComputedStyle(selectedBox).color);
-
         const currentAlign = window.getComputedStyle(selectedBox).textAlign || 'center';
         alignBtns.forEach(btn => {
             if (btn.getAttribute('data-align') === currentAlign) btn.classList.add('active');
@@ -879,104 +456,41 @@
 
     function removeSelectedBox() {
         if (selectedBox) {
-            selectedBox.remove();
-            selectedBox = null;
-            selectedControls.style.opacity = '0.4';
-            selectedControls.style.pointerEvents = 'none';
+            selectedBox.remove(); selectedBox = null;
+            selectedControls.style.opacity = '0.4'; selectedControls.style.pointerEvents = 'none';
             saveCurrentState();
         }
     }
 
-    document.addEventListener('keydown', function(e) {
-        if (!selectedBox) return;
-        if (e.key === 'Delete') {
-            e.preventDefault();
-            removeSelectedBox();
-        }
-    });
-
+    document.addEventListener('keydown', function(e) { if (selectedBox && e.key === 'Delete') { e.preventDefault(); removeSelectedBox(); } });
     document.addEventListener('click', function(e) {
-        if (selectedBox) {
-            if (selectedBox.contains(e.target) || document.querySelector('.controls').contains(e.target)) {
-                return;
-            }
-            cleanSelectedBox();
-        }
+        if (selectedBox && !selectedBox.contains(e.target) && !document.querySelector('.controls').contains(e.target)) cleanSelectedBox();
     });
 
-    activeSize.addEventListener('input', () => {
-        if (selectedBox) {
-            selectedBox.style.fontSize = activeSize.value + 'px';
-            sizeIndicator.textContent = activeSize.value + 'px';
-            saveCurrentState();
-        }
-    });
-
-    activeColor.addEventListener('input', () => {
-        if (selectedBox) {
-            selectedBox.style.color = activeColor.value;
-            saveCurrentState();
-        }
-    });
-
+    activeSize.addEventListener('input', () => { if (selectedBox) { selectedBox.style.fontSize = activeSize.value + 'px'; sizeIndicator.textContent = activeSize.value + 'px'; saveCurrentState(); } });
+    activeColor.addEventListener('input', () => { if (selectedBox) { selectedBox.style.color = activeColor.value; saveCurrentState(); } });
     alignBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (!selectedBox) return;
-            alignBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            selectedBox.style.textAlign = btn.getAttribute('data-align');
-            saveCurrentState();
-        });
+        btn.addEventListener('click', () => { if (selectedBox) { alignBtns.forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedBox.style.textAlign = btn.getAttribute('data-align'); saveCurrentState(); } });
     });
-
     deleteBoxBtn.addEventListener('click', removeSelectedBox);
 
     function initStableDrag(box, dragHandle) {
-        let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
-
+        let isDragging = false, startX, startY, initialLeft, initialTop;
         dragHandle.addEventListener('mousedown', function(e) {
-            isDragging = true;
-            selectBox(box);
-            startX = e.clientX;
-            startY = e.clientY;
-            initialLeft = box.offsetLeft;
-            initialTop = box.offsetTop;
-            e.stopPropagation();
-            e.preventDefault();
+            isDragging = true; selectBox(box); startX = e.clientX; startY = e.clientY; initialLeft = box.offsetLeft; initialTop = box.offsetTop; e.stopPropagation(); e.preventDefault();
         });
-
         document.addEventListener('mousemove', function(e) {
             if (!isDragging || selectedBox !== box) return;
-            box.style.left = (initialLeft + (e.clientX - startX)) + 'px';
-            box.style.top = (initialTop + (e.clientY - startY)) + 'px';
+            box.style.left = (initialLeft + (e.clientX - startX)) + 'px'; box.style.top = (initialTop + (e.clientY - startY)) + 'px';
         });
-
-        document.addEventListener('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                saveCurrentState();
-            }
-        });
+        document.addEventListener('mouseup', function() { if (isDragging) { isDragging = false; saveCurrentState(); } });
     }
 
     function initResize(box, handleR, handleSE) {
-        let isResizing = false;
-        let currentHandle = null;
-        let startX, startWidth;
-
-        function startResize(e, handle) {
-            isResizing = true;
-            currentHandle = handle;
-            startX = e.clientX;
-            startWidth = box.offsetWidth;
-            e.stopPropagation();
-            e.preventDefault();
-        }
-
+        let isResizing = false, currentHandle = null, startX, startWidth;
+        function startResize(e, handle) { isResizing = true; currentHandle = handle; startX = e.clientX; startWidth = box.offsetWidth; e.stopPropagation(); e.preventDefault(); }
         handleR.addEventListener('mousedown', (e) => startResize(e, 'r'));
         handleSE.addEventListener('mousedown', (e) => startResize(e, 'se'));
-
         document.addEventListener('mousemove', function(e) {
             if (!isResizing || selectedBox !== box) return;
             if (currentHandle === 'r' || currentHandle === 'se') {
@@ -984,137 +498,66 @@
                 if (newWidth > 80) box.style.width = newWidth + 'px';
             }
         });
-
-        document.addEventListener('mouseup', function() {
-            if (isResizing) {
-                isResizing = false;
-                saveCurrentState();
-            }
-        });
+        document.addEventListener('mouseup', function() { if (isResizing) { isResizing = false; saveCurrentState(); } });
     }
 
     downloadBtn.addEventListener('click', function() {
         cleanSelectedBox();
-
-        document.querySelectorAll('.text-box').forEach(box => {
-            if (getBoxText(box) === '') box.remove();
-        });
-
-        const width = editorContainer.offsetWidth;
-        const height = editorContainer.offsetHeight;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width * 2;
-        canvas.height = height * 2;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
+        document.querySelectorAll('.text-box').forEach(box => { if (getBoxText(box) === '') box.remove(); });
+        const width = editorContainer.offsetWidth, height = editorContainer.offsetHeight;
+        const canvas = document.createElement('canvas'); canvas.width = width * 2; canvas.height = height * 2;
+        const ctx = canvas.getContext('2d'); ctx.scale(2, 2);
 
         const drawCanvas = () => {
             const hasImg = previewImage.src && previewImage.complete && previewImage.naturalWidth > 0 && previewImage.style.display !== 'none';
             if (hasImg) {
-                const imgRatio = previewImage.naturalWidth / previewImage.naturalHeight;
-                const containerRatio = width / height;
-                let sWidth = previewImage.naturalWidth;
-                let sHeight = previewImage.naturalHeight;
-                let sx = 0, sy = 0;
-
-                if (imgRatio > containerRatio) {
-                    sWidth = previewImage.naturalHeight * containerRatio;
-                    sx = (previewImage.naturalWidth - sWidth) / 2;
-                } else {
-                    sHeight = previewImage.naturalWidth / containerRatio;
-                    sy = (previewImage.naturalHeight - sHeight) / 2;
-                }
+                const imgRatio = previewImage.naturalWidth / previewImage.naturalHeight; const containerRatio = width / height;
+                let sWidth = previewImage.naturalWidth, sHeight = previewImage.naturalHeight, sx = 0, sy = 0;
+                if (imgRatio > containerRatio) { sWidth = previewImage.naturalHeight * containerRatio; sx = (previewImage.naturalWidth - sWidth) / 2; }
+                else { sHeight = previewImage.naturalWidth / containerRatio; sy = (previewImage.naturalHeight - sHeight) / 2; }
                 ctx.drawImage(previewImage, sx, sy, sWidth, sHeight, 0, 0, width, height);
-            } else {
-                ctx.fillStyle = '#e2e8f0';
-                ctx.fillRect(0, 0, width, height);
-            }
+            } else { ctx.fillStyle = '#e2e8f0'; ctx.fillRect(0, 0, width, height); }
 
             const boxes = editorContainer.querySelectorAll('.text-box');
             boxes.forEach(box => {
-                const style = window.getComputedStyle(box);
-                const fontSize = parseFloat(style.fontSize);
-                const color = style.color;
-                const textAlign = style.textAlign || 'center';
-                const lineHeight = parseFloat(style.lineHeight) || (fontSize * 1.35);
-
-                const borderLeft = parseFloat(style.borderLeftWidth) || 0;
-                const borderRight = parseFloat(style.borderRightWidth) || 0;
-                const borderTop = parseFloat(style.borderTopWidth) || 0;
-                const paddingLeft = parseFloat(style.paddingLeft) || 0;
-                const paddingRight = parseFloat(style.paddingRight) || 0;
-                const paddingTop = parseFloat(style.paddingTop) || 0;
-
-                const left = box.offsetLeft;
-                const top = box.offsetTop;
-                const outerWidth = box.offsetWidth;
+                const style = window.getComputedStyle(box); const fontSize = parseFloat(style.fontSize); const color = style.color;
+                const textAlign = style.textAlign || 'center'; const lineHeight = parseFloat(style.lineHeight) || (fontSize * 1.35);
+                const borderLeft = parseFloat(style.borderLeftWidth) || 0; const borderRight = parseFloat(style.borderRightWidth) || 0;
+                const borderTop = parseFloat(style.borderTopWidth) || 0; const paddingLeft = parseFloat(style.paddingLeft) || 0;
+                const paddingRight = parseFloat(style.paddingRight) || 0; const paddingTop = parseFloat(style.paddingTop) || 0;
+                const left = box.offsetLeft; const top = box.offsetTop; const outerWidth = box.offsetWidth;
                 const contentWidth = Math.max(1, outerWidth - borderLeft - borderRight - paddingLeft - paddingRight);
 
                 ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif`;
-                ctx.fillStyle = color;
-                ctx.textBaseline = 'middle';
-                
-                ctx.shadowColor = 'rgba(0,0,0,0.9)';
-                ctx.shadowBlur = 4;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
+                ctx.fillStyle = color; ctx.textBaseline = 'middle'; ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 4; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+                const xOffset = 1.5, yOffset = 2.5; let drawX;
+                if (textAlign === 'center') { ctx.textAlign = 'center'; drawX = left + outerWidth / 2 + xOffset; }
+                else if (textAlign === 'right') { ctx.textAlign = 'right'; drawX = left + outerWidth - borderRight - paddingRight + xOffset; }
+                else { ctx.textAlign = 'left'; drawX = left + borderLeft + paddingLeft + xOffset; }
 
-                const xOffset = 1.5;
-                const yOffset = 2.5;
-
-                let drawX;
-                if (textAlign === 'center') {
-                    ctx.textAlign = 'center';
-                    drawX = left + outerWidth / 2 + xOffset;
-                } else if (textAlign === 'right') {
-                    ctx.textAlign = 'right';
-                    drawX = left + outerWidth - borderRight - paddingRight + xOffset;
-                } else {
-                    ctx.textAlign = 'left';
-                    drawX = left + borderLeft + paddingLeft + xOffset;
-                }
-
-                const rawText = box.innerText.replace(/\n$/, '');
-                const lines = wrapTextLikeCss(ctx, rawText, contentWidth);
-
+                const rawText = box.innerText.replace(/\n$/, ''); const lines = wrapTextLikeCss(ctx, rawText, contentWidth);
                 const contentTop = top + borderTop + paddingTop;
-                lines.forEach((line, i) => {
-                    const lineCenterY = contentTop + lineHeight * (i + 0.5) + yOffset;
-                    ctx.fillText(line, drawX, lineCenterY);
-                });
+                lines.forEach((line, i) => { ctx.fillText(line, drawX, contentTop + lineHeight * (i + 0.5) + yOffset); });
             });
 
-            const link = document.createElement('a');
-            link.download = `meme_${currentRatio.replace(':', '_')}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+            // Canvas 기반 변환은 이미지 EXIF(위치 메타데이터)를 완전 자동 제거함 (C28 충족)
+            const link = document.createElement('a'); link.download = `meme_${currentRatio.replace(':', '_')}.png`;
+            link.href = canvas.toDataURL('image/png'); link.click();
         };
 
-        if (previewImage.src && !previewImage.complete) {
-            previewImage.onload = drawCanvas;
-        } else {
-            drawCanvas();
-        }
+        if (previewImage.src && !previewImage.complete) previewImage.onload = drawCanvas;
+        else drawCanvas();
     });
 
     function wrapTextLikeCss(ctx, text, maxWidth) {
-        const paragraphs = text.split('\n');
-        const lines = [];
+        const paragraphs = text.split('\n'); const lines = [];
         paragraphs.forEach(paragraph => {
-            if (paragraph.length === 0) {
-                lines.push('');
-                return;
-            }
+            if (paragraph.length === 0) { lines.push(''); return; }
             let currentLine = '';
             for (const ch of paragraph) {
                 const testLine = currentLine + ch;
-                if (currentLine.length > 0 && ctx.measureText(testLine).width > maxWidth) {
-                    lines.push(currentLine);
-                    currentLine = ch;
-                } else {
-                    currentLine = testLine;
-                }
+                if (currentLine.length > 0 && ctx.measureText(testLine).width > maxWidth) { lines.push(currentLine); currentLine = ch; }
+                else currentLine = testLine;
             }
             lines.push(currentLine);
         });
@@ -1123,38 +566,17 @@
 
     saveTemplateBtn.addEventListener('click', async () => {
         const name = templateNameInput.value.trim();
-        if (!name) {
-            alert('템플릿 이름을 입력해 주세요!');
-            return;
-        }
+        if (!name) { alert('템플릿 이름을 입력해 주세요!'); return; }
 
         const textBoxesData = [];
         document.querySelectorAll('.text-box').forEach(box => {
-            const clone = box.cloneNode(true);
-            clone.querySelectorAll('.drag-handle, .resize-handle').forEach(h => h.remove());
+            const clone = box.cloneNode(true); clone.querySelectorAll('.drag-handle, .resize-handle').forEach(h => h.remove());
             const boxText = clone.innerText.replace(/\n$/, '').trim();
-
-            if (boxText) {
-                textBoxesData.push({
-                    text: boxText,
-                    left: box.style.left,
-                    top: box.style.top,
-                    width: box.style.width,
-                    fontSize: box.style.fontSize,
-                    color: box.style.color,
-                    textAlign: box.style.textAlign
-                });
-            }
+            if (boxText) textBoxesData.push({ text: boxText, left: box.style.left, top: box.style.top, width: box.style.width, fontSize: box.style.fontSize, color: box.style.color, textAlign: box.style.textAlign });
         });
 
         const compressedImg = await compressImageSrc(previewImage.src || '', 600, 0.6);
-
-        const templateData = {
-            name: name,
-            ratio: currentRatio,
-            imageSrc: compressedImg,
-            textBoxes: textBoxesData
-        };
+        const templateData = { name: name, ratio: currentRatio, imageSrc: compressedImg, textBoxes: textBoxesData };
 
         let templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
         const existingIndex = templates.findIndex(t => t.name === name);
@@ -1163,17 +585,68 @@
 
         try {
             localStorage.setItem('meme_templates', JSON.stringify(templates));
-            templateNameInput.value = '';
-            renderTemplateList();
-            alert(`템플릿 "${name}"이(가) 저장되었습니다!`);
-        } catch (e) {
-            if (e.name === 'QuotaExceededError' || e.code === 22) {
-                alert('저장 공간(5MB)이 가득 차 템플릿을 저장할 수 없습니다.\n기존 템플릿을 일부 삭제 후 다시 시도해 주세요.');
-            } else {
-                alert('템플릿 저장 중 오류가 발생했습니다.');
-            }
-        }
+            templateNameInput.value = ''; renderTemplateList(); alert(`템플릿 "${name}"이(가) 저장되었습니다!`);
+        } catch (e) { alert('저장 공간이 부족합니다.'); }
     });
+
+    // C22 ~ C24 JSON 검증 로직 구현부
+    importJsonBtn.addEventListener('click', () => jsonFileInput.click());
+    jsonFileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            let data;
+            // C23: 문법 손상 검증 (SyntaxError 체크)
+            try {
+                data = JSON.parse(event.target.result);
+            } catch (err) {
+                alert('🛑 [C23 검증 FAIL -> PASS]\nJSON 문법이 손상되었습니다.\n파일 저장이 거부되고 기존 템플릿 데이터가 보존됩니다.');
+                jsonFileInput.value = '';
+                return;
+            }
+
+            // C24: 필수 키 스키마 검증 (name, ratio, textBoxes 체크)
+            if (
+                !data ||
+                typeof data !== 'object' ||
+                !data.name || typeof data.name !== 'string' || data.name.trim() === '' ||
+                !data.ratio || !['1:1', '4:5', '9:16'].includes(data.ratio) ||
+                !Array.isArray(data.textBoxes)
+            ) {
+                alert('🛑 [C24 검증 FAIL -> PASS]\nJSON 필수 항목(name, ratio, textBoxes)이 누락되었거나 유효하지 않습니다.\n파일 저장이 거부되고 기존 템플릿 데이터가 보존됩니다.');
+                jsonFileInput.value = '';
+                return;
+            }
+
+            // C22: 정상 JSON 복원 처리
+            let templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
+            const existingIndex = templates.findIndex(t => t.name === data.name);
+            if (existingIndex >= 0) templates[existingIndex] = data;
+            else templates.push(data);
+
+            localStorage.setItem('meme_templates', JSON.stringify(templates));
+            renderTemplateList();
+            loadTemplate(data.name);
+            alert(`✅ [C22 검증 PASS]\n템플릿 "${data.name}"이(가) 성공적으로 복원되었습니다!`);
+            jsonFileInput.value = '';
+        };
+        reader.readAsText(file);
+    });
+
+    window.exportTemplateJson = function(name, event) {
+        event.stopPropagation();
+        const templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
+        const template = templates.find(t => t.name === name);
+        if (!template) return;
+
+        const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `template_${name}.json`;
+        link.click();
+    };
 
     window.loadTemplate = function(name) {
         const templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
@@ -1181,33 +654,18 @@
         if (!template) return;
 
         document.querySelectorAll('.text-box').forEach(b => b.remove());
-        selectedBox = null;
-        selectedControls.style.opacity = '0.4';
-        selectedControls.style.pointerEvents = 'none';
-
-        applyRatio(template.ratio);
-        previewImage.src = template.imageSrc || '';
-        updatePlaceholderVisibility();
+        selectedBox = null; selectedControls.style.opacity = '0.4'; selectedControls.style.pointerEvents = 'none';
+        applyRatio(template.ratio); previewImage.src = template.imageSrc || ''; updatePlaceholderVisibility();
 
         template.textBoxes.forEach(data => {
-            createTextbox(
-                parseInt(data.left) || 20,
-                parseInt(data.top) || 20,
-                data.text,
-                parseInt(data.fontSize) || 24,
-                data.color || '#ffffff',
-                data.textAlign || 'center',
-                data.width || '150px'
-            );
+            createTextbox(parseInt(data.left)||20, parseInt(data.top)||20, data.text, parseInt(data.fontSize)||24, data.color||'#ffffff', data.textAlign||'center', data.width||'150px');
         });
-
         saveCurrentState();
     };
 
     window.deleteTemplate = function(name, event) {
         event.stopPropagation();
         if (!confirm(`정말 "${name}" 템플릿을 삭제하시겠습니까?`)) return;
-
         let templates = JSON.parse(localStorage.getItem('meme_templates') || '[]');
         templates = templates.filter(t => t.name !== name);
         localStorage.setItem('meme_templates', JSON.stringify(templates));
@@ -1224,72 +682,40 @@
         }
 
         templates.forEach(t => {
-            const card = document.createElement('div');
-            card.className = 'template-card';
-            card.onclick = () => loadTemplate(t.name);
-
-            const imgWrap = document.createElement('div');
-            imgWrap.className = 'template-card-img-wrap';
+            const card = document.createElement('div'); card.className = 'template-card'; card.onclick = () => loadTemplate(t.name);
+            const imgWrap = document.createElement('div'); imgWrap.className = 'template-card-img-wrap';
 
             if (t.imageSrc && t.imageSrc.trim() !== '') {
-                const img = document.createElement('img');
-                img.src = t.imageSrc;
-                img.className = 'template-card-img';
-                img.alt = t.name;
-                imgWrap.appendChild(img);
+                const img = document.createElement('img'); img.src = t.imageSrc; img.className = 'template-card-img'; img.alt = t.name; imgWrap.appendChild(img);
             } else {
-                const noImg = document.createElement('div');
-                noImg.className = 'template-card-no-img';
-                noImg.textContent = '배경 이미지 없음';
-                imgWrap.appendChild(noImg);
+                const noImg = document.createElement('div'); noImg.className = 'template-card-no-img'; noImg.textContent = '배경 이미지 없음'; imgWrap.appendChild(noImg);
             }
 
-            const body = document.createElement('div');
-            body.className = 'template-card-body';
+            const body = document.createElement('div'); body.className = 'template-card-body';
+            const titleBox = document.createElement('div'); titleBox.style.display = 'flex'; titleBox.style.alignItems = 'center';
+            const nameEl = document.createElement('span'); nameEl.className = 'template-card-title'; nameEl.textContent = t.name;
+            const ratioTag = document.createElement('span'); ratioTag.className = 'template-card-ratio-tag'; ratioTag.textContent = t.ratio || '1:1';
+            titleBox.appendChild(nameEl); titleBox.appendChild(ratioTag);
 
-            const titleBox = document.createElement('div');
-            titleBox.style.display = 'flex';
-            titleBox.style.alignItems = 'center';
+            const actions = document.createElement('div'); actions.className = 'card-actions';
+            const exportBtn = document.createElement('button'); exportBtn.className = 'template-card-btn'; exportBtn.textContent = 'JSON'; exportBtn.onclick = (e) => exportTemplateJson(t.name, e);
+            const delBtn = document.createElement('button'); delBtn.className = 'template-card-btn del'; delBtn.textContent = '삭제'; delBtn.onclick = (e) => deleteTemplate(t.name, e);
 
-            const nameEl = document.createElement('span');
-            nameEl.className = 'template-card-title';
-            nameEl.textContent = t.name;
-
-            const ratioTag = document.createElement('span');
-            ratioTag.className = 'template-card-ratio-tag';
-            ratioTag.textContent = t.ratio || '1:1';
-
-            titleBox.appendChild(nameEl);
-            titleBox.appendChild(ratioTag);
-
-            const delBtn = document.createElement('button');
-            delBtn.className = 'template-card-del';
-            delBtn.textContent = '삭제';
-            delBtn.onclick = (e) => deleteTemplate(t.name, e);
-
-            body.appendChild(titleBox);
-            body.appendChild(delBtn);
-
-            card.appendChild(imgWrap);
-            card.appendChild(body);
-
+            actions.appendChild(exportBtn); actions.appendChild(delBtn);
+            body.appendChild(titleBox); body.appendChild(actions);
+            card.appendChild(imgWrap); card.appendChild(body);
             templateListContainer.appendChild(card);
         });
     }
 
-    renderTemplateList();
-    loadCurrentState();
+    renderTemplateList(); loadCurrentState();
 
     function rgbToHex(rgb) {
         if (!rgb || rgb.startsWith('#')) return rgb;
         const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
         if (!match) return '#ffffff';
-        return "#" + match.slice(1, 4).map(x => {
-            const hex = parseInt(x).toString(16);
-            return hex.length === 1 ? "0" + hex : hex;
-        }).join('');
+        return "#" + match.slice(1, 4).map(x => { const hex = parseInt(x).toString(16); return hex.length === 1 ? "0" + hex : hex; }).join('');
     }
 </script>
-
 </body>
 </html>
